@@ -19,13 +19,12 @@ type CreateGameResDTO = {
   // value: number;
 };
 
-const createGameFx = createEffect<CreateGameReqDTO, CreateGameResDTO>(
-  async ({ value = 10, color = "white", time = "5:00" }) => {
-    return (await backendRequestFx({
-      path: `/create/${value}/${color}/${time}`,
-      method: "POST",
-    })) as CreateGameResDTO;
-  },
-);
+const createGameFx = createEffect<CreateGameReqDTO, CreateGameResDTO>(async ({ value, color, time }) => {
+  return (await backendRequestFx({
+    path: "/create",
+    method: "POST",
+    data: { value, color, time },
+  })) as CreateGameResDTO;
+});
 
 export const api = { createGameFx };

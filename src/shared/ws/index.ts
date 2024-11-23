@@ -87,91 +87,45 @@ const validateMessageFx = createEffect<string, WSMessage>((raw: string) => {
   return res;
 });
 
-export const initWebsocketFx = createEffect<{ data: Record<string, any> }, WebSocket>(async ({ data }) => {
-  //   if (!token) throw new Error("No token");
-  //   const protocol = ["access_token", token];
-  const link = `ws://${import.meta.env.PUBLIC_ENV__BASE_URL}/connect/${data.roomId}/${data.playerId}`;
-  const socket = new WebSocket(link);
-  let loaded = false;
-  socket.addEventListener(
-    "open",
-    scopeBind(() => opened(), { safe: true }),
-  );
-  // socket.onopen = function (e) {
-  //   scopeBind(() => opened(), { safe: true })
-  // }
-  socket.addEventListener(
-    "message",
-    scopeBind((event) => rawMessageReceived(event.data), { safe: true }),
-  );
-  // socket.onmessage = function (event) {
-  //   scopeBind(() => rawMessageReceived(event.data), { safe: true })
-  //   // console.log(event.data)
-  // }
-  socket.addEventListener(
-    "close",
-    scopeBind((e) => closed(e), { safe: true }),
-  );
-  // socket.onclose = function (event) {
-  //   // socket.close()
-  //   scopeBind(() => closed(), { safe: true })
-  //   if (event.wasClean) {
-  //     console.log(
-  //       `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`,
-  //       event
-  //     )
-  //   } else {
-  //     // e.g. server process killed or network down
-  //     // event.code is usually 1006 in this case
-  //     console.log('socketClose', event)
-  //     console.log('[close] Connection died')
-  //   }
-  // }
-  socket.addEventListener(
-    "error",
-    scopeBind((e) => closed(e), { safe: true }),
-  );
-  // socket.onopen = function (e) {
-  //   opened();
-  //   // console.log("[open] Connection established");
-  //   // console.log("Sending to server");
-  // };
-  // socket.onmessage = function (event) {
-  //   // const parsedData: WSEventReceived = JSON.parse(event.data)
-  //   rawMessageReceived(event.data);
-  //   // console.log(event.data)
-  // };
-  // socket.onclose = function (event) {
-  //   // socket.close()
-  //   closed();
-  //   if (event.wasClean) {
-  //     console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`, event);
-  //   } else {
-  //     // e.g. server process killed or network down
-  //     // event.code is usually 1006 in this case
-  //     console.log("socketClose", event);
-  //     console.log("[close] Connection died");
-  //   }
-  // };
+export const initWebsocketFx = createEffect<{ data: { gameKey: string; playerId: string } }, WebSocket>(
+  async ({ data }) => {
+    //   if (!token) throw new Error("No token");
+    //   const protocol = ["access_token", token];
+    const link = `ws://${import.meta.env.PUBLIC_ENV__BASE_URL}/connect/${data.gameKey}/${data.playerId}`;
+    const socket = new WebSocket(link);
+    let loaded = false;
+    socket.addEventListener(
+      "open",
+      scopeBind(() => opened(), { safe: true }),
+    );
+    socket.addEventListener(
+      "message",
+      scopeBind((event) => rawMessageReceived(event.data), { safe: true }),
+    );
 
-  // socket.onerror = function (error) {
-  //   console.log("socketerr", error);
-  //   closed();
-  //   //console.log(`${error.message}`);
-  // };
+    socket.addEventListener(
+      "close",
+      scopeBind((e) => closed(e), { safe: true }),
+    );
 
-  const timeout = 30000; // 30 seconds timeout
-  const startTime = Date.now();
+    socket.addEventListener(
+      "error",
+      scopeBind((e) => closed(e), { safe: true }),
+    );
 
-  while (!loaded) {
-    if (Date.now() - startTime > timeout) {
-      throw new Error("WebSocket connection timeout");
+    const timeout = 30000; // 30 seconds timeout
+    const startTime = Date.now();
+
+    while (!loaded) {
+      if (Date.now() - startTime > timeout) {
+        throw new Error("WebSocket connection timeout");
+      }
+      loaded = socket.readyState === WebSocket.OPEN;
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
-    loaded = socket.readyState === WebSocket.OPEN;
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-  return socket;
-});
+    return socket;
+  },
+);
 
 export const reconnectFx = attach({ effect: initWebsocketFx });
 

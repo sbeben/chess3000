@@ -45,3 +45,17 @@ sample({
   clock: clientNavigateFx.doneData,
   target: $redirectTo,
 });
+
+/**
+ *Client navigation
+ */
+export const clientNavigate = createEvent<string>();
+
+sample({
+  clock: clientNavigate,
+  target: createEffect((path: string) =>
+    window.location.assign(
+      `${import.meta.env.PUBLIC_ENV__BASE_PROTOCOL}://${import.meta.env.PUBLIC_ENV__BASE_URL}${path}`,
+    ),
+  ),
+});

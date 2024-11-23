@@ -80,7 +80,8 @@ export const requestFx = createEffect<BaseRequest, unknown, ErrorRes>(
       // @ts-expect-error wtf
       fetchSettings.headers["Content-Type"] = "application/json";
     }
-    const res = await fetch(`${url ?? import.meta.env.VITE_BACKEND_URL}${path}${queryToString(query)}`, fetchSettings);
+    const baseUrl = url || `${import.meta.env.PUBLIC_ENV__BASE_PROTOCOL}://${import.meta.env.PUBLIC_ENV__BASE_URL}`;
+    const res = await fetch(`${baseUrl}${path}${queryToString(query)}`, fetchSettings);
     if (stream) {
       let chunks = "";
 

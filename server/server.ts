@@ -70,7 +70,24 @@ export async function createServer(isProduction: boolean) {
       server: { middlewareMode: true },
       logLevel: "error",
     });
-
+    await app.register(import("@fastify/cors"), {
+      origin: ["http://localhost:3000", "http://0.0.0.0:3000"],
+      credentials: true,
+      methods: ["HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "Origin",
+        "Accept",
+        "X-Requested-With",
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Credentials",
+      ],
+      exposedHeaders: ["Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"],
+      preflight: true,
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
+    });
     app.addHook("onRequest", async (request, reply) => {
       const next = () =>
         new Promise<void>((resolve) => {
@@ -90,13 +107,13 @@ export async function createServer(isProduction: boolean) {
     }
   });
 
-  app.post<{ Params: { value: number; color: "black" | "white" | "random"; time: string } }>(
-    "/create/:value/:color/:time",
+  app.post<{ Body: { value: number; color: "black" | "white" | "random"; time: string } }>(
+    "/create",
     function handler(req, res) {
       // bound to fastify server
       // this.myDecoration.someFunc()
 
-      const { time, color, value } = req.params;
+      const { time, color, value } = req.body;
       let playerColor = color;
       if (playerColor === "random") {
         playerColor = Math.random() > 0.5 ? "black" : "white";
@@ -113,7 +130,7 @@ export async function createServer(isProduction: boolean) {
         turn: "white",
         time: { white: parseTime(time), black: parseTime(time), initial: parseTime(time) },
       };
-
+      console.log({ [gameKey]: WSMap[gameKey] });
       res.status(201).send({
         // link: createInviteLink(gameKey, req),
         gameKey,
@@ -147,6 +164,7 @@ export async function createServer(isProduction: boolean) {
     { websocket: true },
     function handler(socket, req) {
       const { gameKey, playerId } = req.params;
+      console.log({ gameKey, playerId });
       if (!gameKey || !playerId) {
         socket.close();
         return;
