@@ -27,16 +27,17 @@ sample({
 sample({
   clock: gate.open,
   source: { gameKey: Game.$key, playerId: Game.$selfId },
-  fn: ({ gameKey, playerId }) => WsApi.createMessage("join", { gameKey, playerId }),
+  fn: ({ gameKey, playerId }) => ({ data: { gameKey: gameKey!, playerId: playerId! } }),
   target: WsApi.initWebsocketFx,
 });
 
+//for game creator
 sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "created",
   fn: ({ type, data }) => {
     const { playerColor, value, time, link } = data as WsApi.WsServerDataDict["created"];
-    return { type: "created" as "created", playerColor, value, time, link };
+    return { type: "created" as const, playerColor, value, time, link };
   },
   target: spread({
     type: Game.$status,
@@ -44,6 +45,30 @@ sample({
     value: Game.$value,
     time: Game.$time,
     link: Game.$inviteLink,
+  }),
+});
+
+sample({
+  clock: WsApi.messageReceived,
+  filter: ({ type }) => type === "accepted",
+  fn: () => "pick" as const,
+  target: Game.$status,
+});
+
+//for second player
+sample({
+  clock: WsApi.messageReceived,
+  filter: ({ type }) => type === "joined",
+  fn: ({ type, data }) => {
+    const { playerColor, value, time } = data as WsApi.WsServerDataDict["joined"];
+    return { type: "pick" as const, playerColor, value, time };
+  },
+  target: spread({
+    type: Game.$status,
+    playerColor: Game.$color,
+    value: Game.$value,
+    time: Game.$time,
+    // link: Game.$inviteLink,
   }),
 });
 

@@ -90,7 +90,7 @@ export async function createServer(isProduction: boolean) {
     }
   });
 
-  app.get<{ Params: { value: number; color: "black" | "white" | "random"; time: string } }>(
+  app.post<{ Params: { value: number; color: "black" | "white" | "random"; time: string } }>(
     "/create/:value/:color/:time",
     function handler(req, res) {
       // bound to fastify server
@@ -115,28 +115,32 @@ export async function createServer(isProduction: boolean) {
       };
 
       res.status(201).send({
-        link: createInviteLink(gameKey, req),
+        // link: createInviteLink(gameKey, req),
         gameKey,
         playerId,
-        playerColor: playerColor as "black" | "white",
-        value,
+        // playerColor: playerColor as "black" | "white",
+        // value,
       });
     },
   );
 
-  app.get<{ Params: { gameKey: string } }>("/invite/:gameKey", function wsHandler(req, res) {
-    const { gameKey } = req.params;
+  app.get<{ Params: { gameKey: string } }>(
+    "/invite/:gameKey",
+    //
+    function wsHandler(req, res) {
+      const { gameKey } = req.params;
 
-    const gameRoom = WSMap[gameKey];
-    if (!gameRoom) {
-      res.status(404).send("Not found");
-      return;
-    }
+      const gameRoom = WSMap[gameKey];
+      if (!gameRoom) {
+        res.status(404).send("Not found");
+        return;
+      }
 
-    const acceptingPlayerId = Math.random().toString(36).substring(2, 15);
+      const acceptingPlayerId = Math.random().toString(36).substring(2, 15);
 
-    res.redirect(`/game/${gameKey}:${acceptingPlayerId}`);
-  });
+      res.redirect(`/game/${gameKey}:${acceptingPlayerId}`);
+    },
+  );
 
   app.get<{ Params: { gameKey: string; playerId: string } }>(
     "/connect/:gameKey/:playerId",
@@ -224,8 +228,12 @@ export async function createServer(isProduction: boolean) {
         });
         gameRoom.status = "pick";
 
-        send(invitingPlayer.conn!, "accepted", { gameKey, playerId, playerColor: acceptingPlayerColor });
-        send(socket, "accepted", { gameKey, playerId, playerColor: acceptingPlayerColor });
+        send(invitingPlayer.conn!, "accepted", {});
+        send(socket, "joined", {
+          value: gameRoom.value,
+          playerColor: acceptingPlayerColor,
+          time: gameRoom.time.initial,
+        });
       }
     },
   );

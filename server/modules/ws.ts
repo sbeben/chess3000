@@ -23,15 +23,16 @@ type WSMapType = Record<
 >;
 export const WSMap: WSMapType = {};
 
-type WsServerEventType = "created" | "accepted" | "start" | "moved" | "finished";
+type WsServerEventType = "created" | "accepted" | "joined" | "start" | "moved" | "finished";
 type WsClientEventType = "confirm_pick" | "move" | "resign";
 type WsServerDataDict = {
   // server
   finished: { result: "white" | "black" | "draw" };
-  created: { playerColor: "black" | "white"; value: number; time: number; link: string }; //{ link: string; playerColor: "black" | "white"; value: number; gameKey: string; playerId: string };
+  created: { playerColor: "black" | "white"; value: number; time: number; link: string }; //this event receives game creator
   // joined: {};
   start: { fen: string };
-  accepted: {};
+  accepted: {}; // this event receives game creator when second player joined;
+  joined: { playerColor: "black" | "white"; value: number; time: number }; // this event receives second player when he joined;
   // move: { from: string; to: string };
   moved: { playerId: string; from: string; to: string; success: boolean };
 };

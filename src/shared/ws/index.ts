@@ -1,12 +1,10 @@
-import { attach, createEffect, createEvent, createStore, sample } from "effector";
+import { attach, createEffect, createEvent, createStore, sample, scopeBind } from "effector";
 import type { BoardPosition } from "~/types/game";
 
-type WSMessage =
-  | {
-      type: "created";
-      data: { playerColor: "black" | "white"; value: number; time: number; link: string };
-    }
-  | { type: "start"; data: { fen: string } };
+type WSMessage = {
+  type: "created" | "accepted" | "start" | "joined";
+  data: { playerColor: "black" | "white"; value: number; time: number; link?: string } | { fen: string };
+};
 
 // {
 //   type: "created";
@@ -21,7 +19,7 @@ type WsClientEventType = "create" | "join" | "ready" | "move" | "confirm_pick";
 type WsClientDataDict = {
   // server
   create: {};
-  join: {};
+  join: { gameKey: string; playerId: string };
   ready: { fen: string };
   move: { square: string; piece: string; timestamp: number };
   confirm_pick: { position: BoardPosition };
@@ -32,7 +30,8 @@ export type WsServerDataDict = {
   start: { fen: string };
   finished: { result: "white" | "black" | "draw" };
   created: { playerColor: "black" | "white"; value: number; time: number; link: string };
-  joined: {};
+
+  joined: { playerColor: "black" | "white"; value: number; time: number };
   accepted: {};
   moved: { playerId: string; from: string; to: string; success: boolean };
   started: {};
@@ -52,7 +51,7 @@ export const sendMessage = createEvent<Record<string, string | object>>();
 export const close = createEvent<number>();
 
 export const opened = createEvent();
-export const closed = createEvent();
+export const closed = createEvent<Event>();
 const rawMessageReceived = createEvent<string>();
 export const messageReceived = createEvent<WSMessage>();
 
@@ -88,56 +87,91 @@ const validateMessageFx = createEffect<string, WSMessage>((raw: string) => {
   return res;
 });
 
-export const initWebsocketFx = createEffect<{ type: "create" | "join"; data: Record<string, any> }, WebSocket>(
-  async ({ type, data }) => {
-    //   if (!token) throw new Error("No token");
-    //   const protocol = ["access_token", token];
-    const link = `ws://${import.meta.env.PUBLIC_ENV__BASE_URL}${type === "create" ? "/create/35/white/5:00" : `/join/${data.roomId}/${data.playerId}`}`;
-    const socket = new WebSocket(link);
-    let loaded = false;
+export const initWebsocketFx = createEffect<{ data: Record<string, any> }, WebSocket>(async ({ data }) => {
+  //   if (!token) throw new Error("No token");
+  //   const protocol = ["access_token", token];
+  const link = `ws://${import.meta.env.PUBLIC_ENV__BASE_URL}/connect/${data.roomId}/${data.playerId}`;
+  const socket = new WebSocket(link);
+  let loaded = false;
+  socket.addEventListener(
+    "open",
+    scopeBind(() => opened(), { safe: true }),
+  );
+  // socket.onopen = function (e) {
+  //   scopeBind(() => opened(), { safe: true })
+  // }
+  socket.addEventListener(
+    "message",
+    scopeBind((event) => rawMessageReceived(event.data), { safe: true }),
+  );
+  // socket.onmessage = function (event) {
+  //   scopeBind(() => rawMessageReceived(event.data), { safe: true })
+  //   // console.log(event.data)
+  // }
+  socket.addEventListener(
+    "close",
+    scopeBind((e) => closed(e), { safe: true }),
+  );
+  // socket.onclose = function (event) {
+  //   // socket.close()
+  //   scopeBind(() => closed(), { safe: true })
+  //   if (event.wasClean) {
+  //     console.log(
+  //       `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`,
+  //       event
+  //     )
+  //   } else {
+  //     // e.g. server process killed or network down
+  //     // event.code is usually 1006 in this case
+  //     console.log('socketClose', event)
+  //     console.log('[close] Connection died')
+  //   }
+  // }
+  socket.addEventListener(
+    "error",
+    scopeBind((e) => closed(e), { safe: true }),
+  );
+  // socket.onopen = function (e) {
+  //   opened();
+  //   // console.log("[open] Connection established");
+  //   // console.log("Sending to server");
+  // };
+  // socket.onmessage = function (event) {
+  //   // const parsedData: WSEventReceived = JSON.parse(event.data)
+  //   rawMessageReceived(event.data);
+  //   // console.log(event.data)
+  // };
+  // socket.onclose = function (event) {
+  //   // socket.close()
+  //   closed();
+  //   if (event.wasClean) {
+  //     console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`, event);
+  //   } else {
+  //     // e.g. server process killed or network down
+  //     // event.code is usually 1006 in this case
+  //     console.log("socketClose", event);
+  //     console.log("[close] Connection died");
+  //   }
+  // };
 
-    socket.onopen = function (e) {
-      opened();
-      // console.log("[open] Connection established");
-      // console.log("Sending to server");
-    };
-    socket.onmessage = function (event) {
-      // const parsedData: WSEventReceived = JSON.parse(event.data)
-      rawMessageReceived(event.data);
-      // console.log(event.data)
-    };
-    socket.onclose = function (event) {
-      // socket.close()
-      closed();
-      if (event.wasClean) {
-        console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`, event);
-      } else {
-        // e.g. server process killed or network down
-        // event.code is usually 1006 in this case
-        console.log("socketClose", event);
-        console.log("[close] Connection died");
-      }
-    };
+  // socket.onerror = function (error) {
+  //   console.log("socketerr", error);
+  //   closed();
+  //   //console.log(`${error.message}`);
+  // };
 
-    socket.onerror = function (error) {
-      console.log("socketerr", error);
-      closed();
-      //console.log(`${error.message}`);
-    };
+  const timeout = 30000; // 30 seconds timeout
+  const startTime = Date.now();
 
-    const timeout = 30000; // 30 seconds timeout
-    const startTime = Date.now();
-
-    while (!loaded) {
-      if (Date.now() - startTime > timeout) {
-        throw new Error("WebSocket connection timeout");
-      }
-      loaded = socket.readyState === WebSocket.OPEN;
-      await new Promise((resolve) => setTimeout(resolve, 50));
+  while (!loaded) {
+    if (Date.now() - startTime > timeout) {
+      throw new Error("WebSocket connection timeout");
     }
-    return socket;
-  },
-);
+    loaded = socket.readyState === WebSocket.OPEN;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return socket;
+});
 
 export const reconnectFx = attach({ effect: initWebsocketFx });
 
