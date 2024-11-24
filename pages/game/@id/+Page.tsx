@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { HTML5Backend } from "react-dnd-html5-backend";
 
 import * as Game from "~/game/model";
 import { useGate, useUnit } from "effector-react";
@@ -257,7 +256,7 @@ export function Page() {
         flexDirection: "column",
       }}
     >
-      <DnDProvider backend={HTML5Backend}>
+      <DnDProvider>
         <div
           style={{
             display: "flex",
@@ -266,6 +265,7 @@ export function Page() {
           }}
         >
           <Board
+            id="ManualBoardEditor"
             position={position ?? FEN.empty}
             getPositionObject={(p) => positionChanged(p)}
             boardWidth={400}
@@ -290,9 +290,9 @@ export function Page() {
           {status === "pick" && (
             <PickPieces color={color ?? "white"} value={value ?? 25} isKingActive={!isKingOnBoard} />
           )}
-          {status === "game" && <GamePanel />}
         </div>
       </DnDProvider>
+      {status === "game" && <GamePanel />}
       {status === "created" && <InviteDialog />}
     </div>
   );

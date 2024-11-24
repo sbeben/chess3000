@@ -1,6 +1,6 @@
-import type { Square } from "react-chessboard/dist/chessboard/types";
+import type { Piece } from "~/types/game";
 
-import { type Piece, values } from "./model";
+import { values } from "./model";
 import { SparePiece } from "./parts";
 
 type Props = {
@@ -17,7 +17,7 @@ export const PickPieces = ({ color, value, isKingActive }: Props) => {
         <div style={{ display: "flex", gap: "4px" }}>
           <div
             style={{
-              width: "fit-conten",
+              width: "fit-content",
               height: "fit-content",
               opacity: values[piece as keyof typeof values] > value || (piece === "K" && !isKingActive) ? 0.5 : 1,
               pointerEvents:
@@ -27,7 +27,7 @@ export const PickPieces = ({ color, value, isKingActive }: Props) => {
             <SparePiece
               width={40}
               piece={`${color[0]}${piece}` as Piece}
-              dndId={"dndId" + piece + color}
+              dndId="ManualBoardEditor"
               key={"key" + piece + color}
             />
           </div>
