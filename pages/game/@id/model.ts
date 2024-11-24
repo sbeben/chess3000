@@ -72,13 +72,7 @@ sample({
   }),
 });
 
-// sample({
-//   clock: WsApi.messageReceived,
-//   filter: ({ type }) => type === "accepted",
-//   fn: () => 'pick',
-//   target: Game.$status
-// });
-
+//for both
 sample({
   clock: Game.picked,
   source: Game.$positionObject,

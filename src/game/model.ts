@@ -1,7 +1,7 @@
 import { invoke } from "@withease/factories";
 import { Chess } from "chess.js";
 import { createEvent, createStore, restore, sample } from "effector";
-import { not } from "patronum";
+import { and, not } from "patronum";
 import type { BoardPosition, Piece, Square } from "~/types/game";
 
 import { createChess } from "./factory";
@@ -28,10 +28,11 @@ export const $time = createStore<number | null>(null);
 //pick events
 export const sparePieceDropped = createEvent<{ piece: Piece; square: Square }>();
 export const pieceDroppedOffBoard = createEvent<{ piece: Piece; square: Square }>();
-export const picked = createEvent<{ fen: string }>();
+export const picked = createEvent();
 
 //pick stores
 export const $isKingOnBoard = createStore<boolean>(false);
+export const $isConfirmDisabled = not($isKingOnBoard);
 
 //game events
 export const offerDraw = createEvent();

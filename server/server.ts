@@ -205,8 +205,10 @@ export async function createServer(isProduction: boolean) {
           if (type === "confirm_pick") {
             const { position } = validate(type, data);
             gameRoom.players[playerId]!.pick = position;
-            const otherPlayer = gameRoom.players[Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!];
+            const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
+            const otherPlayer = gameRoom.players[otherPlayerId];
             const otherPlayerPick = otherPlayer!.pick;
+            console.log({ playerId, otherPlayerPick });
             if (!!otherPlayerPick) {
               //concat fens here and send to both players
               //and start clock
@@ -241,7 +243,35 @@ export async function createServer(isProduction: boolean) {
 
         gameRoom.players[playerId] = { conn: socket, color: acceptingPlayerColor, pick: null };
         socket.on("message", (message) => {
-          //list all accepting player commands
+          const { type, data } = parse(message.toString());
+          if (!type) {
+            socket.close();
+            return;
+          }
+
+          if (type === "confirm_pick") {
+            const { position } = validate(type, data);
+            gameRoom.players[playerId]!.pick = position;
+            const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
+            const otherPlayer = gameRoom.players[otherPlayerId];
+            const otherPlayerPick = otherPlayer!.pick;
+            console.log({ playerId, otherPlayerPick });
+            if (!!otherPlayerPick) {
+              //concat fens here and send to both players
+              //and start clock
+              const fen = customToFen({ ...position, ...otherPlayerPick });
+              send(socket, "start", { fen });
+              send(otherPlayer!.conn!, "start", { fen });
+              gameRoom.status = "game";
+            }
+          } else if (type === "move") {
+            const { piece, square, timestamp } = validate(type, data);
+            //push move to game state,time, check if valid and if mate etcetc
+          } else if (type === "resign") {
+            const { timestamp } = validate(type, data);
+          }
+
+          //list all inviting player handlers here
           console.log(message.toString());
         });
         gameRoom.status = "pick";
