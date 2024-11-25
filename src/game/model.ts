@@ -68,7 +68,7 @@ export const $key = createStore<string | null>(null);
 
 export const $selfId = createStore<string | null>(null);
 
-export const $status = createStore<"created" | "joined" | "pick" | "game" | null>("pick");
+export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("pick");
 
 export const $position = createStore<string | null>(null);
 export const $displayedPosition = createStore<string | null>(null);

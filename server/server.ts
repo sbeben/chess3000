@@ -10,7 +10,6 @@ import { renderPage } from "vike/server";
 
 import { CONFIG } from "./config.js";
 import { directoryRoot } from "./directory-root.js";
-//import { BASE_URL } from "./utils/url.js";
 import { WSMap, parse, send, validate } from "./modules/ws.js";
 import { FEN, customToFen } from "./utils/chess.js";
 import { parseTime } from "./utils/time.js";
@@ -201,11 +200,11 @@ export async function createServer(isProduction: boolean) {
             socket.close();
             return;
           }
-
+          const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
           if (type === "confirm_pick") {
             const { position } = validate(type, data);
             gameRoom.players[playerId]!.pick = position;
-            const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
+
             const otherPlayer = gameRoom.players[otherPlayerId];
             const otherPlayerPick = otherPlayer!.pick;
             console.log({ playerId, otherPlayerPick });
@@ -213,13 +212,35 @@ export async function createServer(isProduction: boolean) {
               //concat fens here and send to both players
               //and start clock
               const fen = customToFen({ ...position, ...otherPlayerPick });
+              gameRoom.game.load(fen);
               send(socket, "start", { fen });
               send(otherPlayer!.conn!, "start", { fen });
+
               gameRoom.status = "game";
             }
           } else if (type === "move") {
-            const { piece, square, timestamp } = validate(type, data);
-            //push move to game state,time, check if valid and if mate etcetc
+            console.log("before validation", { data });
+            const { move, timestamp } = validate(type, data);
+            const game = gameRoom.game;
+            const correctMove = gameRoom.game.move(move);
+
+            if (game.isGameOver()) {
+              let result: "white" | "black" | "draw";
+
+              if (game.isCheckmate()) {
+                result = game.turn() === "w" ? "black" : "white";
+              } else {
+                result = "draw";
+              }
+
+              // Send game over message if any ending condition is met
+              send(gameRoom.players[otherPlayerId]!.conn!, "game_over", { result });
+              send(gameRoom.players[playerId]!.conn!, "game_over", { result });
+              delete WSMap[gameKey];
+            } else {
+              // Game continues, send the move to the other player
+              send(gameRoom.players[otherPlayerId]!.conn!, "move", { move: correctMove, timestamp: Date.now() });
+            }
           } else if (type === "resign") {
             const { timestamp } = validate(type, data);
           }
@@ -248,11 +269,11 @@ export async function createServer(isProduction: boolean) {
             socket.close();
             return;
           }
-
+          const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
           if (type === "confirm_pick") {
             const { position } = validate(type, data);
             gameRoom.players[playerId]!.pick = position;
-            const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
+
             const otherPlayer = gameRoom.players[otherPlayerId];
             const otherPlayerPick = otherPlayer!.pick;
             console.log({ playerId, otherPlayerPick });
@@ -260,13 +281,33 @@ export async function createServer(isProduction: boolean) {
               //concat fens here and send to both players
               //and start clock
               const fen = customToFen({ ...position, ...otherPlayerPick });
+              gameRoom.game.load(fen);
               send(socket, "start", { fen });
               send(otherPlayer!.conn!, "start", { fen });
               gameRoom.status = "game";
             }
           } else if (type === "move") {
-            const { piece, square, timestamp } = validate(type, data);
-            //push move to game state,time, check if valid and if mate etcetc
+            const { move, timestamp } = validate(type, data);
+            const game = gameRoom.game;
+            const correctMove = gameRoom.game.move(move);
+
+            if (game.isGameOver()) {
+              let result: "white" | "black" | "draw";
+
+              if (game.isCheckmate()) {
+                result = game.turn() === "w" ? "black" : "white";
+              } else {
+                result = "draw";
+              }
+
+              // Send game over message if any ending condition is met
+              send(gameRoom.players[otherPlayerId]!.conn!, "game_over", { result });
+              send(gameRoom.players[playerId]!.conn!, "game_over", { result });
+              delete WSMap[gameKey];
+            } else {
+              // Game continues, send the move to the other player
+              send(gameRoom.players[otherPlayerId]!.conn!, "move", { move: correctMove, timestamp: Date.now() });
+            }
           } else if (type === "resign") {
             const { timestamp } = validate(type, data);
           }

@@ -1,5 +1,5 @@
 import { type WebSocket } from "@fastify/websocket";
-import type { Chess } from "chess.js";
+import type { Chess, Move } from "chess.js";
 import z from "zod";
 import type { BoardPosition, Piece, Square } from "~/types/game";
 
@@ -23,18 +23,19 @@ type WSMapType = Record<
 >;
 export const WSMap: WSMapType = {};
 
-type WsServerEventType = "created" | "accepted" | "joined" | "start" | "moved" | "finished";
+type WsServerEventType = "created" | "accepted" | "joined" | "start" | "move" | "game_over";
 type WsClientEventType = "confirm_pick" | "move" | "resign";
 type WsServerDataDict = {
   // server
-  finished: { result: "white" | "black" | "draw" };
+
   created: { playerColor: "black" | "white"; value: number; time: number; link: string }; //this event receives game creator
   // joined: {};
   start: { fen: string };
   accepted: {}; // this event receives game creator when second player joined;
   joined: { playerColor: "black" | "white"; value: number; time: number }; // this event receives second player when he joined;
   // move: { from: string; to: string };
-  moved: { playerId: string; from: string; to: string; success: boolean };
+  move: { move: Move; timestamp: number };
+  game_over: { result: "white" | "black" | "draw" };
 };
 
 export function send<T extends WsServerEventType>(socket: WebSocket, type: T, data?: WsServerDataDict[T]) {
@@ -43,13 +44,13 @@ export function send<T extends WsServerEventType>(socket: WebSocket, type: T, da
 
 type WsClientDataDict = {
   confirm_pick: { position: BoardPosition };
-  move: { piece: string; square: string; timestamp: number };
+  move: { move: Move; timestamp: number };
   resign: { timestamp: number };
 };
 
 export const wsSchemaDict: Record<WsClientEventType, z.Schema> = {
   confirm_pick: z.object({ position: z.record(z.string()) }).strict(),
-  move: z.object({ piece: z.string(), square: z.string(), timestamp: z.number() }).strict(),
+  move: z.object({ move: z.record(z.string()), timestamp: z.number() }).strict(),
   resign: z.object({ timestamp: z.number() }).strict(),
 };
 

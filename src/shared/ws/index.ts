@@ -1,9 +1,17 @@
+import type { Move } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample, scopeBind } from "effector";
 import type { BoardPosition } from "~/types/game";
 
+type WsServerEventType = "created" | "accepted" | "move" | "start" | "game_over" | "joined";
+type WsClientEventType = "create" | "join" | "ready" | "move" | "confirm_pick";
+
 type WSMessage = {
-  type: "created" | "accepted" | "start" | "joined";
-  data: { playerColor: "black" | "white"; value: number; time: number; link?: string } | { fen: string };
+  type: WsServerEventType;
+  data:
+    | { playerColor: "black" | "white"; value: number; time: number; link?: string }
+    | { fen: string }
+    | { move: Move; timestamp: number }
+    | { result: "white" | "black" | "draw"; timestamp: number };
 };
 
 // {
@@ -14,14 +22,12 @@ type WSMessage = {
 // | { type: "accepted"; data: {} };
 //   | { type: "moved"; data: { playerId: string; from: string; to: string; success: boolean } };
 
-type WsServerEventType = "created" | "accepted" | "moved" | "start" | "finished";
-type WsClientEventType = "create" | "join" | "ready" | "move" | "confirm_pick";
 type WsClientDataDict = {
   // server
   create: {};
   join: { gameKey: string; playerId: string };
   ready: { fen: string };
-  move: { square: string; piece: string; timestamp: number };
+  move: { move: Move; timestamp: number };
   confirm_pick: { position: BoardPosition };
   // move: { from: string; to: string };
 };
@@ -30,10 +36,10 @@ export type WsServerDataDict = {
   start: { fen: string };
   finished: { result: "white" | "black" | "draw" };
   created: { playerColor: "black" | "white"; value: number; time: number; link: string };
-
+  game_over: { result: "white" | "black" | "draw"; timestamp: number };
   joined: { playerColor: "black" | "white"; value: number; time: number };
   accepted: {};
-  moved: { playerId: string; from: string; to: string; success: boolean };
+  move: { move: Move; timestamp: number };
   started: {};
 };
 

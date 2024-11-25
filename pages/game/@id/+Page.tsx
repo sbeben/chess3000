@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import * as Game from "~/game/model";
 import { useGate, useUnit } from "effector-react";
@@ -7,7 +7,7 @@ import { PickPieces } from "~/game/PickPieces";
 import { clone } from "~/game/factory";
 import { FEN, sparePieceDropped } from "~/game/model";
 import { Board, DnDProvider } from "~/game/parts";
-import { Link } from "~/shared/routing";
+import { Link, clientNavigate } from "~/shared/routing";
 
 import { gate } from "./model";
 
@@ -79,6 +79,62 @@ const InviteDialog = () => {
               fill="currentColor"
             />
           </svg>
+        </button>
+      </div>
+    </dialog>
+  );
+};
+
+const EndgameDialog = () => {
+  const { isOver, result, playerColor, navigate } = useUnit({
+    isOver: Game.$$state.$isOver,
+    result: Game.$$state.$result,
+    playerColor: Game.$$state.$playerColor,
+    navigate: clientNavigate,
+  });
+
+  if (!isOver || !result) return null;
+
+  const resultText = useMemo(() => {
+    if (result === "black") {
+      return playerColor === "b" ? "You won" : "You lost";
+    } else if (result === "white") {
+      return playerColor === "w" ? "You won" : "You lost";
+    } else {
+      return "Draw";
+    }
+  }, [isOver]);
+
+  return (
+    <dialog
+      open
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%,-50%)",
+        padding: "16px",
+        backgroundColor: "white",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+        borderRadius: "8px",
+        border: "none",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <h3 style={{ marginBottom: "12px" }}>{resultText}</h3>
+
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            padding: "8px",
+            borderRadius: "0 4px 4px 0",
+            border: "1px solid #ccc",
+            borderLeft: "none",
+            background: "white",
+            cursor: "pointer",
+          }}
+        >
+          Exit
         </button>
       </div>
     </dialog>
@@ -325,7 +381,7 @@ export function Page() {
             id="ManualBoardEditor"
             position={status === "pick" ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)}
             onPieceDrop={(from, to, piece) => {
-              move({ from, to });
+              move({ from, to, promotion: piece[1]?.toLowerCase() });
               return true;
             }}
             onSquareClick={(square) => squareClicked(square)}
@@ -357,6 +413,7 @@ export function Page() {
       </DnDProvider>
       {status === "game" && <GamePanel />}
       {status === "created" && <InviteDialog />}
+      {status === "finished" && <EndgameDialog />}
     </div>
   );
 }

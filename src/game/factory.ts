@@ -1,11 +1,12 @@
 import { createFactory } from "@withease/factories";
-import { Chess, type Color, type Move, type Square } from "chess.js";
+import { Chess, type Color, type Move, type Piece, type Square } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample } from "effector";
 import { condition, debug, not } from "patronum";
 
+export type MoveEvent = { from: Square; to: Square; promotion?: string };
+
 export const clone = (chess: Chess): Chess => {
   const copy = Object.create(Object.getPrototypeOf(chess));
-  // Copy all properties from the original instance
   Object.assign(copy, chess);
   return copy;
 };
@@ -13,29 +14,42 @@ export const clone = (chess: Chess): Chess => {
 export const createChess = createFactory(() => {
   const initialChess = new Chess();
 
-  // Create a store for the chess instance
   const $chess = createStore<Chess>(initialChess);
   const $playerColor = createStore<Color>("w");
 
-  // Create events for updating the chess state
-  const move = createEvent<{ from: Square; to: Square }>();
+  const $isOver = createStore(false);
+  const $result = createStore<"white" | "black" | "draw" | null>(null);
+
+  const move = createEvent<MoveEvent>();
   const undo = createEvent();
   const load = createEvent<{ fen: string; playerColor: Color }>();
   const reset = createEvent();
 
-  //output events
-  const moved = createEvent<Move | string>();
-  //stuff
+  const moved = createEvent<Move>();
+  const opponentMoved = createEvent<{ move: Move }>();
+
   const squareClicked = createEvent<Square>();
   const pieceSelected = createEvent<Square | null>();
   const $selectedSquare = createStore<Square | null>(null);
   const $validMoves = createStore<Move[]>([]);
 
-  // Create effects for chess methods
   const moveFx = attach({
     source: $chess,
     mapParams: (move: { from: Square; to: Square }, chess) => ({ chess, move }),
     effect: createEffect<{ chess: Chess; move: { from: Square; to: Square } }, { chess: Chess; move: Move | string }>(
+      ({ chess, move }) => {
+        const copy = clone(chess);
+        console.log({ copy, move });
+        const validMove = copy.move(move);
+        return { chess: copy, move: validMove };
+      },
+    ),
+  });
+
+  const opponentMoveFx = attach({
+    source: $chess,
+    mapParams: (move: MoveEvent, chess) => ({ chess, move }),
+    effect: createEffect<{ chess: Chess; move: MoveEvent }, { chess: Chess; move: Move | string }>(
       ({ chess, move }) => {
         const copy = clone(chess);
         console.log({ copy, move });
@@ -76,7 +90,7 @@ export const createChess = createFactory(() => {
     effect: createEffect<Chess, Chess>(() => new Chess()),
   });
 
-  // Connect events to effects using sample
+  // logic
   sample({
     clock: move,
     target: moveFx,
@@ -103,6 +117,11 @@ export const createChess = createFactory(() => {
     target: resetFx,
   });
 
+  sample({
+    clock: opponentMoved,
+    fn: ({ move }) => move,
+    target: opponentMoveFx,
+  });
   //
 
   sample({
@@ -112,14 +131,14 @@ export const createChess = createFactory(() => {
   });
 
   sample({
-    clock: moveFx.doneData,
+    clock: [moveFx.doneData, opponentMoveFx.doneData],
     fn: ({ chess }) => chess,
     target: $chess,
   });
 
   sample({
     clock: moveFx.doneData,
-    fn: ({ move }) => move,
+    fn: ({ move }) => move as Move,
     target: moved,
   });
   //
@@ -168,23 +187,6 @@ export const createChess = createFactory(() => {
     target: $validMoves.reinit,
   });
 
-  // sample({
-  //   clock: squareClicked,
-  //   source: {
-  //     selectedSquare: $selectedSquare,
-  //     validMoves: $validMoves,
-  //   },
-  //   filter: ({ selectedSquare, validMoves }, clickedSquare) => {
-  //     return !!selectedSquare && validMoves.some((move) => move.to === clickedSquare);
-  //   },
-  //   fn: ({ selectedSquare }, clickedSquare) => ({
-  //     from: selectedSquare!,
-  //     to: clickedSquare,
-  //   }),
-  //   target: move,
-  // });
-
-  // Create derived stores for chess data
   const $fen = $chess.map((chess) => chess.fen());
   const $turn = $chess.map((chess) => chess.turn());
   const $inCheck = $chess.map((chess) => chess.isCheck());
@@ -193,7 +195,7 @@ export const createChess = createFactory(() => {
   const $inDraw = $chess.map((chess) => chess.isDraw());
   const $insufficientMaterial = $chess.map((chess) => chess.isInsufficientMaterial());
   const $inThreefoldRepetition = $chess.map((chess) => chess.isThreefoldRepetition());
-  const $gameOver = $chess.map((chess) => chess.isGameOver());
+  // const $gameOver = $chess.map((chess) => chess.isGameOver());
   const $history = $chess.map((chess) => chess.history());
 
   debug(
@@ -224,9 +226,14 @@ export const createChess = createFactory(() => {
     load: load,
     reset: reset,
     //
+    opponentMoved,
+    //
     moved,
     // Stores for chess data
+    $playerColor,
     $chess,
+    $isOver,
+    $result,
     $fen,
     $turn,
     $inCheck,
@@ -235,7 +242,6 @@ export const createChess = createFactory(() => {
     $inDraw,
     $insufficientMaterial,
     $inThreefoldRepetition,
-    $gameOver,
     $history,
 
     //

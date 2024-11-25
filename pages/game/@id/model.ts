@@ -4,12 +4,8 @@ import type { Color } from "chess.js";
 import { createEffect, createStore, sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
-import { clientNavigateFx, redirectTo } from "~/shared/routing";
 
 import { pageStarted } from "./+pageStarted";
-
-// export const $gameKey = createStore("");
-// export const $
 
 export const gate = createGate();
 
@@ -103,4 +99,34 @@ sample({
     load: Game.$$state.load,
   }),
   //[, Game.$displayedPosition, Game.$$state.load],
+});
+
+sample({
+  clock: Game.$$state.moved,
+  fn: (move) => WsApi.createMessage("move", { move: move!, timestamp: Date.now() }),
+  target: WsApi.sendMessage,
+});
+
+sample({
+  clock: WsApi.messageReceived,
+  filter: ({ type }) => type === "move",
+  fn: ({ data }) => {
+    const { move, timestamp } = data as WsApi.WsServerDataDict["move"];
+    return { move };
+  },
+  target: Game.$$state.opponentMoved,
+});
+
+sample({
+  clock: WsApi.messageReceived,
+  filter: ({ type }) => type === "game_over",
+  fn: ({ data }) => {
+    const { result } = data as WsApi.WsServerDataDict["game_over"];
+    return { status: "finished" as const, isOver: true, result };
+  },
+  target: spread({
+    status: Game.$status,
+    result: Game.$$state.$result,
+    isOver: Game.$$state.$isOver,
+  }),
 });
