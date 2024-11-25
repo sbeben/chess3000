@@ -17,7 +17,10 @@ export const values = {
 
 export const getPieceValue = (piece: Piece) => values[piece[1]! as keyof typeof values];
 
-export const FEN = { empty: "8/8/8/8/8/8/8/8 w - - 0 1" };
+export const FEN = {
+  empty: "8/8/8/8/8/8/8/8 w - - 0 1",
+  full: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+};
 
 //invite stores
 export const $inviteLink = createStore<string | null>("https://chaotenschach.com/");

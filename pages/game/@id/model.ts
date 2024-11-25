@@ -1,5 +1,6 @@
 import * as Game from "~/game/model";
 import * as WsApi from "~/shared/ws";
+import type { Color } from "chess.js";
 import { createEffect, createStore, sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
@@ -89,10 +90,17 @@ sample({
 
 sample({
   clock: WsApi.messageReceived,
-  filter: ({ type }) => type === "start",
-  fn: ({ data }) => {
+  source: Game.$color,
+  filter: (_, { type }) => type === "start",
+  fn: (color, { data }) => {
+    const playerColor = (color === "white" ? "w" : "b") as Color;
     const { fen } = data as WsApi.WsServerDataDict["start"];
-    return fen;
+    return { position: fen, display: fen, load: { fen, playerColor } };
   },
-  target: [Game.$position, Game.$displayedPosition, Game.$$state.load],
+  target: spread({
+    position: Game.$position,
+    display: Game.$displayedPosition,
+    load: Game.$$state.load,
+  }),
+  //[, Game.$displayedPosition, Game.$$state.load],
 });

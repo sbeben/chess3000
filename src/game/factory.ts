@@ -1,72 +1,188 @@
 import { createFactory } from "@withease/factories";
-import { Chess, type Move, type Square } from "chess.js";
-import { createEffect, createEvent, createStore, sample } from "effector";
+import { Chess, type Color, type Move, type Square } from "chess.js";
+import { attach, createEffect, createEvent, createStore, sample } from "effector";
+import { condition, debug, not } from "patronum";
+
+export const clone = (chess: Chess): Chess => {
+  const copy = Object.create(Object.getPrototypeOf(chess));
+  // Copy all properties from the original instance
+  Object.assign(copy, chess);
+  return copy;
+};
 
 export const createChess = createFactory(() => {
   const initialChess = new Chess();
 
   // Create a store for the chess instance
   const $chess = createStore<Chess>(initialChess);
+  const $playerColor = createStore<Color>("w");
 
   // Create events for updating the chess state
-  const moveEvent = createEvent<string | Move>();
-  const undoEvent = createEvent();
-  const loadEvent = createEvent<string>();
-  const resetEvent = createEvent();
+  const move = createEvent<{ from: Square; to: Square }>();
+  const undo = createEvent();
+  const load = createEvent<{ fen: string; playerColor: Color }>();
+  const reset = createEvent();
+
+  //output events
+  const moved = createEvent<Move | string>();
+  //stuff
+  const squareClicked = createEvent<Square>();
+  const pieceSelected = createEvent<Square | null>();
+  const $selectedSquare = createStore<Square | null>(null);
+  const $validMoves = createStore<Move[]>([]);
 
   // Create effects for chess methods
-  const moveEffect = createEffect(({ chess, move }: { chess: Chess; move: string | Move }) => {
-    const result = chess.move(move);
-    return !!result; // Return true if the move was successful
+  const moveFx = attach({
+    source: $chess,
+    mapParams: (move: { from: Square; to: Square }, chess) => ({ chess, move }),
+    effect: createEffect<{ chess: Chess; move: { from: Square; to: Square } }, { chess: Chess; move: Move | string }>(
+      ({ chess, move }) => {
+        const copy = clone(chess);
+        console.log({ copy, move });
+        const validMove = copy.move(move);
+        return { chess: copy, move: validMove };
+      },
+    ),
   });
 
-  const undoEffect = createEffect((chess: Chess) => {
-    return chess.undo();
+  const undoFx = attach({
+    source: $chess,
+    mapParams: (_, chess) => chess,
+    effect: createEffect<Chess, Move | null>((chess) => chess.undo()),
   });
 
-  const loadEffect = createEffect(({ chess, fen }: { chess: Chess; fen: string }) => {
-    return chess.load(fen);
+  const loadFx = attach({
+    source: $chess,
+    mapParams: (fen: string, chess) => ({ chess, fen }),
+    effect: createEffect<{ chess: Chess; fen: string }, { chess: Chess }>(({ chess, fen }) => {
+      const copy = clone(chess);
+      copy.load(fen);
+      return { chess: copy };
+    }),
   });
 
-  const resetEffect = createEffect(() => {
-    return new Chess(); // Only create a new instance on reset
+  const getValidMovesFx = attach({
+    source: $chess,
+    mapParams: (square: Square | null, chess) => ({ chess, square }),
+    effect: createEffect<{ chess: Chess; square: Square | null }, Move[]>(({ chess, square }) => {
+      if (!square) return [];
+      return chess.moves({ verbose: true }).filter((move) => move.from === square);
+    }),
+  });
+
+  const resetFx = attach({
+    source: $chess,
+    mapParams: (_, chess) => chess,
+    effect: createEffect<Chess, Chess>(() => new Chess()),
   });
 
   // Connect events to effects using sample
   sample({
-    clock: moveEvent,
-    source: $chess,
-    fn: (chess, move) => ({ chess, move }),
-    target: moveEffect,
+    clock: move,
+    target: moveFx,
   });
 
   sample({
-    clock: undoEvent,
-    source: $chess,
-    target: undoEffect,
+    clock: undo,
+    target: undoFx,
   });
 
   sample({
-    clock: loadEvent,
-    source: $chess,
-    fn: (chess, fen) => ({ chess, fen }),
-    target: loadEffect,
+    clock: load,
+    fn: ({ fen }) => fen,
+    target: loadFx,
+  });
+  sample({
+    clock: load,
+    fn: ({ playerColor }) => playerColor,
+    target: $playerColor,
   });
 
   sample({
-    clock: resetEvent,
-    target: resetEffect,
+    clock: reset,
+    target: resetFx,
   });
 
-  // Update the chess store based on effect results
-  $chess
-    .on(moveEffect.done, (chess, { result }) => {
-      if (result) return chess; // The move was already applied in the effect
-      return chess; // Return unchanged if move was invalid
-    })
-    .on(undoEffect.done, (chess) => chess) // The undo was already applied in the effect
-    .on(loadEffect.done, (chess) => chess) // The new position was already loaded in the effect
-    .on(resetEffect.done, (_, { result }) => result); // Use the new instance created by resetEffect
+  //
+
+  sample({
+    clock: loadFx.doneData,
+    fn: ({ chess }) => chess,
+    target: $chess,
+  });
+
+  sample({
+    clock: moveFx.doneData,
+    fn: ({ chess }) => chess,
+    target: $chess,
+  });
+
+  sample({
+    clock: moveFx.doneData,
+    fn: ({ move }) => move,
+    target: moved,
+  });
+  //
+  sample({
+    clock: squareClicked,
+    source: {
+      playerColor: $playerColor,
+      selectedSquare: $selectedSquare,
+      chess: $chess,
+    },
+    fn: ({ selectedSquare, chess, playerColor }, clickedSquare) => {
+      // If we click the same square twice, deselect it
+      if (selectedSquare === clickedSquare) {
+        return null;
+      }
+
+      // If we click a square with a piece of the current player's color, select it
+      const piece = chess.get(clickedSquare);
+      if (piece && piece.color === chess.turn() && piece.color === playerColor) {
+        return clickedSquare;
+      }
+
+      return null;
+    },
+    target: pieceSelected,
+  });
+
+  sample({
+    clock: pieceSelected,
+    target: $selectedSquare,
+  });
+
+  sample({
+    clock: $selectedSquare.updates,
+    filter: Boolean,
+    target: getValidMovesFx,
+  });
+
+  sample({
+    clock: getValidMovesFx.doneData,
+    target: $validMoves,
+  });
+
+  sample({
+    clock: [moveFx.finally, sample({ clock: $selectedSquare.updates, filter: (v) => !v })],
+    target: $validMoves.reinit,
+  });
+
+  // sample({
+  //   clock: squareClicked,
+  //   source: {
+  //     selectedSquare: $selectedSquare,
+  //     validMoves: $validMoves,
+  //   },
+  //   filter: ({ selectedSquare, validMoves }, clickedSquare) => {
+  //     return !!selectedSquare && validMoves.some((move) => move.to === clickedSquare);
+  //   },
+  //   fn: ({ selectedSquare }, clickedSquare) => ({
+  //     from: selectedSquare!,
+  //     to: clickedSquare,
+  //   }),
+  //   target: move,
+  // });
 
   // Create derived stores for chess data
   const $fen = $chess.map((chess) => chess.fen());
@@ -80,25 +196,35 @@ export const createChess = createFactory(() => {
   const $gameOver = $chess.map((chess) => chess.isGameOver());
   const $history = $chess.map((chess) => chess.history());
 
-  // Additional helper method
-  const getPossibleMovesEffect = createEffect(({ chess, square }: { chess: Chess; square: Square }) => {
-    return chess.moves({ square });
-  });
-
-  const getPossibleMoves = createEvent<Square>();
-  sample({
-    clock: getPossibleMoves,
-    source: $chess,
-    fn: (chess, square) => ({ chess, square }),
-    target: getPossibleMovesEffect,
-  });
-
+  debug(
+    squareClicked,
+    $selectedSquare,
+    $validMoves,
+    // load,
+    // loadFx,
+    // move,
+    // moveFx,
+    // $chess,
+    // $fen,
+    // $turn,
+    // $inCheck,
+    // $inCheckmate,
+    // $inStalemate,
+    // $inDraw,
+    // $insufficientMaterial,
+    // $inThreefoldRepetition,
+    // $gameOver,
+    // $history,
+    // moved,
+  );
   return {
     // Events for triggering actions
-    move: moveEvent,
-    undo: undoEvent,
-    load: loadEvent,
-    reset: resetEvent,
+    move: move,
+    undo: undo,
+    load: load,
+    reset: reset,
+    //
+    moved,
     // Stores for chess data
     $chess,
     $fen,
@@ -112,7 +238,10 @@ export const createChess = createFactory(() => {
     $gameOver,
     $history,
 
-    // Helper method
-    getPossibleMoves,
+    //
+    squareClicked,
+
+    $selectedSquare,
+    $validMoves,
   };
 });

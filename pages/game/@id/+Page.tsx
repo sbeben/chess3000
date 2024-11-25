@@ -4,11 +4,30 @@ import * as Game from "~/game/model";
 import { useGate, useUnit } from "effector-react";
 import { clientOnly } from "vike-react/clientOnly";
 import { PickPieces } from "~/game/PickPieces";
+import { clone } from "~/game/factory";
 import { FEN, sparePieceDropped } from "~/game/model";
 import { Board, DnDProvider } from "~/game/parts";
 import { Link } from "~/shared/routing";
 
 import { gate } from "./model";
+
+interface CustomSquareStyles {
+  [square: string]: React.CSSProperties;
+}
+
+const squareStyles = {
+  selectedSquare: {
+    backgroundColor: "rgba(255, 255, 0, 0.4)",
+  },
+  validMove: {
+    background: `radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)`,
+    cursor: "pointer",
+  },
+  captureMove: {
+    background: `radial-gradient(circle, rgba(255,0,0,.1) 25%, transparent 25%)`,
+    cursor: "pointer",
+  },
+};
 
 const InviteDialog = () => {
   const { inviteLink } = useUnit({
@@ -233,18 +252,56 @@ const GamePanel = () => {
 };
 
 export function Page() {
-  const { sparePieceDrop, value, color, isKingOnBoard, pieceDroppedOff, status, position, positionChanged } = useUnit({
+  const {
+    sparePieceDrop,
+    value,
+    color,
+    isKingOnBoard,
+    pieceDroppedOff,
+    status,
+    position,
+    positionChanged,
+    pregamePosition,
+    game,
+    move,
+    //
+    validMoves,
+    selectedSquare,
+    squareClicked,
+  } = useUnit({
     sparePieceDrop: sparePieceDropped,
     pieceDroppedOff: Game.pieceDroppedOffBoard,
     value: Game.$value,
     color: Game.$color,
     isKingOnBoard: Game.$isKingOnBoard,
     status: Game.$status,
-    position: Game.$position,
     positionChanged: Game.positionChanged,
+    pregamePosition: Game.$position,
+    //
+    position: Game.$$state.$fen,
+    game: Game.$$state.$chess,
+    move: Game.$$state.move,
+    //
+    squareClicked: Game.$$state.squareClicked,
+    validMoves: Game.$$state.$validMoves,
+    selectedSquare: Game.$$state.$selectedSquare,
   });
   useGate(gate);
+  const getSquareStyles = (): CustomSquareStyles => {
+    const styles: CustomSquareStyles = {};
 
+    if (selectedSquare) {
+      styles[selectedSquare] = squareStyles.selectedSquare;
+
+      validMoves.forEach((move) => {
+        styles[move.to] = {
+          ...(game.get(move.to) ? squareStyles.captureMove : squareStyles.validMove),
+        };
+      });
+    }
+
+    return styles;
+  };
   return (
     <div
       style={{
@@ -266,7 +323,12 @@ export function Page() {
         >
           <Board
             id="ManualBoardEditor"
-            position={position ?? FEN.empty}
+            position={status === "pick" ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)}
+            onPieceDrop={(from, to, piece) => {
+              move({ from, to });
+              return true;
+            }}
+            onSquareClick={(square) => squareClicked(square)}
             getPositionObject={(p) => positionChanged(p)}
             boardWidth={400}
             showPromotionDialog={true}
@@ -286,6 +348,7 @@ export function Page() {
               return canDrop;
             }}
             onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
+            customSquareStyles={getSquareStyles()}
           />
           {status === "pick" && (
             <PickPieces color={color ?? "white"} value={value ?? 25} isKingActive={!isKingOnBoard} />
