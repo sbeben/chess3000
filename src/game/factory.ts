@@ -33,6 +33,8 @@ export const createChess = createFactory(() => {
   const $selectedSquare = createStore<Square | null>(null);
   const $validMoves = createStore<Move[]>([]);
 
+  const $isKingChecked = createStore<"w" | "b" | null>(null);
+
   const moveFx = attach({
     source: $chess,
     mapParams: (move: { from: Square; to: Square }, chess) => ({ chess, move }),
@@ -70,7 +72,7 @@ export const createChess = createFactory(() => {
     mapParams: (fen: string, chess) => ({ chess, fen }),
     effect: createEffect<{ chess: Chess; fen: string }, { chess: Chess }>(({ chess, fen }) => {
       const copy = clone(chess);
-      copy.load(fen);
+      copy.load(fen, { skipValidation: true });
       return { chess: copy };
     }),
   });

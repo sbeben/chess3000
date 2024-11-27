@@ -10,6 +10,7 @@ import { renderPage } from "vike/server";
 
 import { CONFIG } from "./config.js";
 import { directoryRoot } from "./directory-root.js";
+import { createGameCommands } from "./modules/game.js";
 import { WSMap, parse, send, validate } from "./modules/ws.js";
 import { FEN, customToFen } from "./utils/chess.js";
 import { parseTime } from "./utils/time.js";
@@ -194,60 +195,8 @@ export async function createServer(isProduction: boolean) {
 
         gameRoom.status = "waiting";
 
-        socket.on("message", (message) => {
-          const { type, data } = parse(message.toString());
-          if (!type) {
-            socket.close();
-            return;
-          }
-          const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
-          if (type === "confirm_pick") {
-            const { position } = validate(type, data);
-            gameRoom.players[playerId]!.pick = position;
+        createGameCommands({ gameKey, playerId, socket });
 
-            const otherPlayer = gameRoom.players[otherPlayerId];
-            const otherPlayerPick = otherPlayer!.pick;
-            console.log({ playerId, otherPlayerPick });
-            if (!!otherPlayerPick) {
-              //concat fens here and send to both players
-              //and start clock
-              const fen = customToFen({ ...position, ...otherPlayerPick });
-              gameRoom.game.load(fen);
-              send(socket, "start", { fen });
-              send(otherPlayer!.conn!, "start", { fen });
-
-              gameRoom.status = "game";
-            }
-          } else if (type === "move") {
-            console.log("before validation", { data });
-            const { move, timestamp } = validate(type, data);
-            const game = gameRoom.game;
-            const correctMove = gameRoom.game.move(move);
-
-            if (game.isGameOver()) {
-              let result: "white" | "black" | "draw";
-
-              if (game.isCheckmate()) {
-                result = game.turn() === "w" ? "black" : "white";
-              } else {
-                result = "draw";
-              }
-
-              // Send game over message if any ending condition is met
-              send(gameRoom.players[otherPlayerId]!.conn!, "game_over", { result });
-              send(gameRoom.players[playerId]!.conn!, "game_over", { result });
-              delete WSMap[gameKey];
-            } else {
-              // Game continues, send the move to the other player
-              send(gameRoom.players[otherPlayerId]!.conn!, "move", { move: correctMove, timestamp: Date.now() });
-            }
-          } else if (type === "resign") {
-            const { timestamp } = validate(type, data);
-          }
-
-          //list all inviting player handlers here
-          console.log(message.toString());
-        });
         //at this point we have inviter sitting on /game page with connected socket waiting for other player
       } else if (gameRoom.status === "waiting") {
         const invitingPlayerEntry = Object.entries(gameRoom.players)[0];
@@ -263,58 +212,7 @@ export async function createServer(isProduction: boolean) {
         const acceptingPlayerColor = invitingPlayer.color === "black" ? "white" : "black";
 
         gameRoom.players[playerId] = { conn: socket, color: acceptingPlayerColor, pick: null };
-        socket.on("message", (message) => {
-          const { type, data } = parse(message.toString());
-          if (!type) {
-            socket.close();
-            return;
-          }
-          const otherPlayerId = Object.keys(gameRoom.players).filter((pId) => pId !== playerId)[0]!;
-          if (type === "confirm_pick") {
-            const { position } = validate(type, data);
-            gameRoom.players[playerId]!.pick = position;
-
-            const otherPlayer = gameRoom.players[otherPlayerId];
-            const otherPlayerPick = otherPlayer!.pick;
-            console.log({ playerId, otherPlayerPick });
-            if (!!otherPlayerPick) {
-              //concat fens here and send to both players
-              //and start clock
-              const fen = customToFen({ ...position, ...otherPlayerPick });
-              gameRoom.game.load(fen);
-              send(socket, "start", { fen });
-              send(otherPlayer!.conn!, "start", { fen });
-              gameRoom.status = "game";
-            }
-          } else if (type === "move") {
-            const { move, timestamp } = validate(type, data);
-            const game = gameRoom.game;
-            const correctMove = gameRoom.game.move(move);
-
-            if (game.isGameOver()) {
-              let result: "white" | "black" | "draw";
-
-              if (game.isCheckmate()) {
-                result = game.turn() === "w" ? "black" : "white";
-              } else {
-                result = "draw";
-              }
-
-              // Send game over message if any ending condition is met
-              send(gameRoom.players[otherPlayerId]!.conn!, "game_over", { result });
-              send(gameRoom.players[playerId]!.conn!, "game_over", { result });
-              delete WSMap[gameKey];
-            } else {
-              // Game continues, send the move to the other player
-              send(gameRoom.players[otherPlayerId]!.conn!, "move", { move: correctMove, timestamp: Date.now() });
-            }
-          } else if (type === "resign") {
-            const { timestamp } = validate(type, data);
-          }
-
-          //list all inviting player handlers here
-          console.log(message.toString());
-        });
+        createGameCommands({ gameKey, playerId, socket });
         gameRoom.status = "pick";
 
         send(invitingPlayer.conn!, "accepted", {});
@@ -326,95 +224,6 @@ export async function createServer(isProduction: boolean) {
       }
     },
   );
-
-  // app.get<{ Params: { value: number; color: "black" | "white" | "random"; time: string } }>(
-  //   "/create/:value/:color/:time",
-  //   { websocket: true },
-  //   function wsHandler(socket, req) {
-  //     // bound to fastify server
-  //     // this.myDecoration.someFunc()
-
-  //     const { time, color } = req.params;
-  //     let playerColor = color;
-  //     if (playerColor === "random") {
-  //       playerColor = Math.random() > 0.5 ? "black" : "white";
-  //     }
-  //     const gameKey = Math.random().toString(36).substring(2, 15);
-  //     const playerId = Math.random().toString(36).substring(2, 15);
-
-  //     // The WebSocket connection is already open at this point
-  //     WSMap[gameKey] = {
-  //       players: { [playerId]: { conn: socket, color: playerColor } },
-  //       game: new Chess(),
-  //       status: "created",
-  //       time: { white: parseTime(time), black: parseTime(time) },
-  //     };
-
-  //     send(socket, "created", {
-  //       link: `${req.protocol}://${req.hostname}/invite/${gameKey}`,
-  //       gameKey,
-  //       playerId,
-  //       playerColor: playerColor as "black" | "white",
-  //       value: req.params.value,
-  //     });
-
-  //     socket.on("message", (message) => {
-  //       console.log(message.toString(), req.params);
-  //     });
-  //   },
-  // );
-
-  // app.get<{ Params: { gameId: string } }>("/join/:gameId", { websocket: true }, function wsHandler(socket, req) {
-  //   const { gameId } = req.params;
-
-  //   const gameRoom = WSMap[gameId];
-  //   if (!gameRoom) {
-  //     socket.send("error: not found");
-  //     socket.close();
-  //     throw new Error("Connection not found");
-  //     return;
-  //   }
-
-  //   const invitingPlayerEntry = Object.entries(gameRoom.players)[0];
-
-  //   if (!invitingPlayerEntry || !invitingPlayerEntry[1].conn) {
-  //     socket.send("error: not found");
-  //     socket.close();
-  //     throw new Error("Connection not found");
-  //     return;
-  //   }
-
-  //   const invitingPlayerId = invitingPlayerEntry[0];
-  //   const invitingPlayer = invitingPlayerEntry[1];
-
-  //   const acceptingPlayerId = Math.random().toString(36).substring(2, 15);
-  //   const acceptingPlayerColor = invitingPlayer.color === "black" ? "white" : "black";
-
-  //   gameRoom.players[acceptingPlayerId] = { conn: socket, color: acceptingPlayerColor };
-
-  //   // send(gameRoom.players[invitingPlayerId]!.conn, "joined", {});
-  //   send(gameRoom.players[acceptingPlayerId]!.conn, "accepted", {});
-
-  //   socket.on("message", (message) => {
-  //     //handle move resign etc
-  //     console.log(message.toString(), req.params);
-  //   });
-  // });
-
-  // app.get<{ Params: { gameId: string } }>("/game/:gameId", function handler(req, res) {
-  //   const { gameId } = req.params;
-  //   const gameRoom = WSMap[gameId];
-  //   if (!gameRoom) {
-  //     res.redirect("/");
-  //     throw new Error("Connection not found");
-  //     return;
-  //   }
-  //   if (gameRoom.status === "created") {
-  //     res.redirect("/");
-  //   }
-  //   if (gameRoom.status === "accepted") {
-  //   }
-  // });
 
   // Vike middleware. It should always be our last middleware
   // (because it's a catch-all middleware superseding any middleware placed after it).

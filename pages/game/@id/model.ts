@@ -77,6 +77,11 @@ sample({
   target: WsApi.sendMessage,
 });
 
+// sample({
+//   clock: WsApi.messageReceived,
+//   filter: ({ type }) => type === "confirm_pick",
+// })
+
 sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "start",

@@ -1,7 +1,7 @@
 import { invoke } from "@withease/factories";
 import { Chess } from "chess.js";
 import { createEvent, createStore, restore, sample } from "effector";
-import { and, not } from "patronum";
+import { and, not, or } from "patronum";
 import type { BoardPosition, Piece, Square } from "~/types/game";
 
 import { createChess } from "./factory";
@@ -32,10 +32,13 @@ export const $time = createStore<number | null>(null);
 export const sparePieceDropped = createEvent<{ piece: Piece; square: Square }>();
 export const pieceDroppedOffBoard = createEvent<{ piece: Piece; square: Square }>();
 export const picked = createEvent();
+export const opponentPicked = createEvent();
 
 //pick stores
 export const $isKingOnBoard = createStore<boolean>(false);
-export const $isConfirmDisabled = not($isKingOnBoard);
+export const $isPickConfirmed = createStore(false).on(picked, () => true);
+export const $isOpponentPickConfirmed = createStore(false).on(opponentPicked, () => true);
+export const $isConfirmDisabled = or(not($isKingOnBoard), $isPickConfirmed);
 
 //game events
 export const offerDraw = createEvent();
@@ -68,7 +71,7 @@ export const $key = createStore<string | null>(null);
 
 export const $selfId = createStore<string | null>(null);
 
-export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("pick");
+export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("created");
 
 export const $position = createStore<string | null>(null);
 export const $displayedPosition = createStore<string | null>(null);
@@ -97,6 +100,16 @@ sample({
 });
 
 sample({
+  clock: sparePieceDropped,
+  source: $positionObject,
+  fn: (position, { piece, square }) => ({
+    ...position,
+    [square]: piece,
+  }),
+  target: positionChanged,
+});
+
+sample({
   clock: kingDropped,
   filter: not($isKingOnBoard),
   fn: () => true,
@@ -108,6 +121,16 @@ sample({
   source: $value,
   fn: (value, { piece }) => value + getPieceValue(piece),
   target: $value,
+});
+
+sample({
+  clock: pieceDroppedOffBoard,
+  source: $positionObject,
+  fn: (position, { piece, square }) => {
+    const { [square]: p, ...rest } = position!;
+    return rest;
+  },
+  target: positionChanged,
 });
 
 sample({

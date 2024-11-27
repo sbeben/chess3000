@@ -1,7 +1,7 @@
 import { useUnit } from "effector-react";
 import type { Piece } from "~/types/game";
 
-import { $isConfirmDisabled, picked, values } from "./model";
+import { $isConfirmDisabled, $isPickConfirmed, picked, values } from "./model";
 import { SparePiece } from "./parts";
 
 type Props = {
@@ -11,7 +11,11 @@ type Props = {
 };
 
 export const PickPieces = ({ color, value, isKingActive }: Props) => {
-  const { confirm, isConfirmDisabled } = useUnit({ confirm: picked, isConfirmDisabled: $isConfirmDisabled });
+  const { confirm, isConfirmDisabled, isConfirmed } = useUnit({
+    confirm: picked,
+    isConfirmDisabled: $isConfirmDisabled,
+    isConfirmed: $isPickConfirmed,
+  });
   return (
     <div style={{ display: "flex", gap: "8px", flexDirection: "column", width: "fit-content" }}>
       <h2>Remaining points: {value}</h2>
@@ -38,7 +42,7 @@ export const PickPieces = ({ color, value, isKingActive }: Props) => {
         </div>
       ))}
       <button onClick={() => confirm()} disabled={isConfirmDisabled}>
-        Confirm
+        {isConfirmed ? "waiting for opponent" : "Confirm"}
       </button>
     </div>
   );

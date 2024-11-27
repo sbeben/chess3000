@@ -1,30 +1,16 @@
 import { type WebSocket } from "@fastify/websocket";
 import type { Chess, Move } from "chess.js";
+import type { WSMapType } from "server/types";
 import z from "zod";
-import type { BoardPosition, Piece, Square } from "~/types/game";
 
 export type InferZodMap<T extends abstract new (...args: any) => any> = {
   [k in keyof Partial<InstanceType<T>>]?: unknown;
 };
-type WSMapType = Record<
-  string,
-  {
-    players: { [id: string]: { conn: WebSocket | null; color: "white" | "black"; pick: BoardPosition | null } };
-    game: Chess;
-    value: number;
-    status: "created" | "waiting" | "accepted" | "pick" | "game" | "finished";
-    turn: "white";
-    time: {
-      initial: number;
-      white: number;
-      black: number;
-    };
-  }
->;
+
 export const WSMap: WSMapType = {};
 
 type WsServerEventType = "created" | "accepted" | "joined" | "start" | "move" | "game_over";
-type WsClientEventType = "confirm_pick" | "move" | "resign";
+type WsClientEventType = "confirm_pick" | "move" | "resign" | "draw_offer" | "draw_decline" | "draw_accept";
 type WsServerDataDict = {
   // server
 
@@ -42,28 +28,43 @@ export function send<T extends WsServerEventType>(socket: WebSocket, type: T, da
   socket.send(JSON.stringify({ type, data }));
 }
 
-type WsClientDataDict = {
-  confirm_pick: { position: BoardPosition };
-  move: { move: Move; timestamp: number };
-  resign: { timestamp: number };
-};
+// type WsClientDataDict = {
+//   confirm_pick: { position: BoardPosition };
+//   move: { move: Move; timestamp: number };
+//   resign: { timestamp: number };
+// };
 
-export const wsSchemaDict: Record<WsClientEventType, z.Schema> = {
+export const wsSchemaDict = z.object({
   confirm_pick: z.object({ position: z.record(z.string()) }).strict(),
-  move: z.object({ move: z.record(z.string()), timestamp: z.number() }).strict(),
-  resign: z.object({ timestamp: z.number() }).strict(),
-};
+  // opponent_picked: z.object({ timestamp: z.number() }).strict(),
+  move: z
+    .object({
+      move: z.object({
+        from: z.string(),
+        to: z.string(),
+        promotion: z.string().optional(),
+      }),
+      timestamp: z.number(),
+    })
+    .strict(),
+  resign: z.object({ color: z.string(), timestamp: z.number() }).strict(),
+  draw_offer: z.object({ color: z.string(), timestamp: z.number() }).strict(),
+  draw_decline: z.object({ timestamp: z.number() }).strict(),
+  draw_accept: z.object({ timestamp: z.number() }).strict(),
+});
+
+type WsClientDataDict = z.infer<typeof wsSchemaDict>;
 
 export function parse(message: string) {
   const data = JSON.parse(message);
   return z
-    .object({ type: z.enum(Object.keys(wsSchemaDict) as [WsClientEventType]), data: z.record(z.unknown()) })
+    .object({ type: z.enum(Object.keys(wsSchemaDict.shape) as [keyof WsClientDataDict]), data: z.record(z.unknown()) })
     .strict()
     .parse(data);
 }
 
-export function validate<T extends WsClientEventType, K>(type: T, data: K) {
-  return wsSchemaDict[type].parse(data) as WsClientDataDict[T];
+export function validate<T extends keyof WsClientDataDict, K>(type: T, data: K) {
+  return wsSchemaDict.shape[type].parse(data) as WsClientDataDict[T];
 }
 
 export function handleClientCommands(socket: WebSocket) {

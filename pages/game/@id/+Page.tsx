@@ -27,6 +27,9 @@ const squareStyles = {
     background: `radial-gradient(circle, rgba(255,0,0,.1) 25%, transparent 25%)`,
     cursor: "pointer",
   },
+  checkedKing: {
+    background: `radial-gradient(circle, 'rgba(255, 0, 0, 0.4)' 75%)`,
+  },
 };
 
 const InviteDialog = () => {
@@ -34,6 +37,24 @@ const InviteDialog = () => {
     inviteLink: Game.$inviteLink,
   });
   if (!inviteLink) return null;
+  const handleCopy = async () => {
+    try {
+      if (navigator?.clipboard) {
+        await navigator.clipboard.writeText(inviteLink);
+      } else {
+        // Fallback for browsers without clipboard API
+        const textArea = document.createElement("textarea");
+        textArea.value = inviteLink;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
     <dialog
       open
@@ -63,7 +84,7 @@ const InviteDialog = () => {
           }}
         />
         <button
-          onClick={() => navigator.clipboard.writeText(inviteLink)}
+          onClick={handleCopy}
           style={{
             padding: "8px",
             borderRadius: "0 4px 4px 0",
@@ -97,9 +118,9 @@ const EndgameDialog = () => {
 
   const resultText = useMemo(() => {
     if (result === "black") {
-      return playerColor === "b" ? "You won" : "You lost";
+      return playerColor === "b" ? "You won!" : "You lost";
     } else if (result === "white") {
-      return playerColor === "w" ? "You won" : "You lost";
+      return playerColor === "w" ? "You won!" : "You lost";
     } else {
       return "Draw";
     }
@@ -120,8 +141,8 @@ const EndgameDialog = () => {
         border: "none",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <h3 style={{ marginBottom: "12px" }}>{resultText}</h3>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+        <h3>{resultText}</h3>
 
         <button
           onClick={() => navigate("/")}
@@ -332,7 +353,7 @@ export function Page() {
     isKingOnBoard: Game.$isKingOnBoard,
     status: Game.$status,
     positionChanged: Game.positionChanged,
-    pregamePosition: Game.$position,
+    pregamePosition: Game.$positionObject,
     //
     position: Game.$$state.$fen,
     game: Game.$$state.$chess,
@@ -354,6 +375,21 @@ export function Page() {
           ...(game.get(move.to) ? squareStyles.captureMove : squareStyles.validMove),
         };
       });
+
+      if (game.isCheck()) {
+        console.log("here");
+        const kingSquare = game
+          .board()
+          .flat()
+          .find((square) => square?.type === "k" && square.color === game.turn())?.square;
+        console.log("kingSquareFound", kingSquare);
+        if (kingSquare) {
+          styles[kingSquare] = {
+            ...squareStyles.checkedKing,
+            ...(styles[kingSquare] || {}),
+          };
+        }
+      }
     }
 
     return styles;
@@ -377,35 +413,57 @@ export function Page() {
             gap: "16px",
           }}
         >
-          <Board
-            id="ManualBoardEditor"
-            position={status === "pick" ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)}
-            onPieceDrop={(from, to, piece) => {
-              move({ from, to, promotion: piece[1]?.toLowerCase() });
-              return true;
-            }}
-            onSquareClick={(square) => squareClicked(square)}
-            getPositionObject={(p) => positionChanged(p)}
-            boardWidth={400}
-            showPromotionDialog={true}
-            boardOrientation={color ?? "white"}
-            showBoardNotation={true}
-            dropOffBoardAction={status === "pick" ? "trash" : "snapback"}
-            onSparePieceDrop={(piece, square) => {
-              let canDrop = true;
-              if (
-                (piece[1] === "K" && isKingOnBoard) ||
-                ((color ?? "white") === "white" && !["1", "2", "3", "4"].includes(square[1]!)) ||
-                ((color ?? "white") === "black" && !["5", "6", "7", "8"].includes(square[1]!))
-              ) {
-                canDrop = false;
-              }
-              if (canDrop) sparePieceDrop({ piece, square });
-              return canDrop;
-            }}
-            onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
-            customSquareStyles={getSquareStyles()}
-          />
+          <div style={{ position: "relative", height: "fit-content", width: "fit-content" }}>
+            <Board
+              id="ManualBoardEditor"
+              position={["created", "pick"].includes(status) ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)}
+              onPieceDrop={(from, to, piece) => {
+                console.log("herrreee");
+                if (status === "pick") {
+                  const { [from]: piece, ...rest } = pregamePosition!;
+                  positionChanged({ ...rest, [to]: piece });
+                } else {
+                  move({ from, to, promotion: piece[1]?.toLowerCase() });
+                }
+                return true;
+              }}
+              isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color![0]}
+              onSquareClick={(square) => squareClicked(square)}
+              // getPositionObject={(p) => positionChanged(p)}
+              boardWidth={400}
+              showPromotionDialog={true}
+              boardOrientation={color ?? "white"}
+              showBoardNotation={true}
+              dropOffBoardAction={status === "pick" ? "trash" : "snapback"}
+              onSparePieceDrop={(piece, square) => {
+                console.log("sparePPP");
+                let canDrop = true;
+                if (
+                  (piece[1] === "K" && isKingOnBoard) ||
+                  ((color ?? "white") === "white" && !["1", "2", "3", "4"].includes(square[1]!)) ||
+                  ((color ?? "white") === "black" && !["5", "6", "7", "8"].includes(square[1]!))
+                ) {
+                  canDrop = false;
+                }
+                if (canDrop) sparePieceDrop({ piece, square });
+                return canDrop;
+              }}
+              onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
+              customSquareStyles={getSquareStyles()}
+            />
+            {status === "pick" && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "50%",
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
+                }}
+              />
+            )}
+          </div>
           {status === "pick" && (
             <PickPieces color={color ?? "white"} value={value ?? 25} isKingActive={!isKingOnBoard} />
           )}
