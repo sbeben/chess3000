@@ -11,3 +11,8 @@
   from = "/*"
   to = "/.netlify/functions/index"
   status = 200
+
+[[redirects]]
+  from = "/assets/*"
+  to = "/client/assets/:splat"
+  status = 200
