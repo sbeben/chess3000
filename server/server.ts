@@ -108,7 +108,7 @@ export async function createServer(isProduction: boolean) {
   });
 
   app.post<{ Body: { value: number; color: "black" | "white" | "random"; time: string } }>(
-    "/create",
+    "api/create",
     function handler(req, res) {
       // bound to fastify server
       // this.myDecoration.someFunc()
@@ -160,7 +160,7 @@ export async function createServer(isProduction: boolean) {
   );
 
   app.get<{ Params: { gameKey: string; playerId: string } }>(
-    "/connect/:gameKey/:playerId",
+    "api/connect/:gameKey/:playerId",
     { websocket: true },
     function handler(socket, req) {
       const { gameKey, playerId } = req.params;

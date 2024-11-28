@@ -97,7 +97,7 @@ export const initWebsocketFx = createEffect<{ data: { gameKey: string; playerId:
   async ({ data }) => {
     //   if (!token) throw new Error("No token");
     //   const protocol = ["access_token", token];
-    const link = `ws://${import.meta.env.PUBLIC_ENV__BASE_URL}/connect/${data.gameKey}/${data.playerId}`;
+    const link = `ws://${import.meta.env.PUBLIC_ENV__BASE_URL}/api/connect/${data.gameKey}/${data.playerId}`;
     const socket = new WebSocket(link);
     let loaded = false;
     socket.addEventListener(
