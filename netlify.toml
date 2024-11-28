@@ -14,5 +14,5 @@
 
 [[redirects]]
   from = "/assets/*"
-  to = "/client/assets/:splat"
+  to = "/client/assets"
   status = 200
