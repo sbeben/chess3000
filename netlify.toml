@@ -1,0 +1,13 @@
+[build]
+  command = "pnpm build"
+  functions = "functions"
+  publish = "dist"
+  targetPort = "3000"
+
+[functions]
+  directory = "/functions/"
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/index"
+  status = 200

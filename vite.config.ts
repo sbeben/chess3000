@@ -18,6 +18,7 @@ export default defineConfig({
     }),
     vike({
       redirects: {},
+      prerender: true,
     }),
     svgr({
       svgrOptions: {},

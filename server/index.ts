@@ -25,7 +25,7 @@ process.on("SIGTERM", async () => {
 });
 
 // Vercel handler
-export default async (req: Request, res: Response) => {
-  await app.ready();
-  app.server.emit("request", req, res);
-};
+// export default async (req: Request, res: Response) => {
+//   await app.ready();
+//   app.server.emit("request", req, res);
+// };
