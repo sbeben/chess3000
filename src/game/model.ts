@@ -41,8 +41,7 @@ export const $isOpponentPickConfirmed = createStore(false).on(opponentPicked, ()
 export const $isConfirmDisabled = or(not($isKingOnBoard), $isPickConfirmed);
 
 //game events
-export const offerDraw = createEvent();
-export const resign = createEvent();
+
 export const switchOrientation = createEvent();
 export const backward = createEvent();
 export const forward = createEvent();

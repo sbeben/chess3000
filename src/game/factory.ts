@@ -28,6 +28,11 @@ export const createChess = createFactory(() => {
   const moved = createEvent<Move>();
   const opponentMoved = createEvent<{ move: Move }>();
 
+  const offerDraw = createEvent();
+  const acceptDraw = createEvent();
+  const declineDraw = createEvent();
+  const resign = createEvent();
+
   const squareClicked = createEvent<Square>();
   const pieceSelected = createEvent<Square | null>();
   const $selectedSquare = createStore<Square | null>(null);
@@ -227,6 +232,10 @@ export const createChess = createFactory(() => {
     undo: undo,
     load: load,
     reset: reset,
+    resign,
+    offerDraw,
+    acceptDraw,
+    declineDraw,
     //
     opponentMoved,
     //

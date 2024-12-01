@@ -3,7 +3,7 @@ import path from "path";
 
 import { backendRequestFx } from "./fetch";
 
-type CreateGameColor = "white" | "black" | "random";
+export type CreateGameColor = "white" | "black" | "random";
 type Color = "white" | "black";
 type CreateGameReqDTO = {
   value: number;
