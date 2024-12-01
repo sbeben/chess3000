@@ -1,7 +1,7 @@
 import * as Game from "~/game/model";
 import * as WsApi from "~/shared/ws";
 import type { Color } from "chess.js";
-import { createEffect, createStore, sample } from "effector";
+import { sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
 

@@ -1,4 +1,7 @@
 export const CONFIG = {
+  get FLY_ALLOC_ID() {
+    return globalThis.process.env.FLY_ALLOC_ID;
+  },
   get NODE_ENV() {
     return globalThis.process.env.NODE_ENV;
   },
@@ -8,6 +11,6 @@ export const CONFIG = {
   },
 
   get PUBLIC_HOST() {
-    return globalThis.process.env.PUBLIC_HOST ?? `http://localhost:${CONFIG.SERVER_PORT}`;
+    return globalThis.process.env.PUBLIC_ENV__HOST ?? `http://localhost:${CONFIG.SERVER_PORT}`;
   },
 };

@@ -10,6 +10,7 @@ import { renderPage } from "vike/server";
 
 import { CONFIG } from "./config.js";
 import { directoryRoot } from "./directory-root.js";
+import { applyFlyProxy } from "./fly-proxy.js";
 import { createGameCommands } from "./modules/game.js";
 import { WSMap, parse, send, validate } from "./modules/ws.js";
 import { FEN, customToFen } from "./utils/chess.js";
@@ -28,6 +29,8 @@ export async function createServer(isProduction: boolean) {
           },
         },
   });
+
+  await applyFlyProxy(app);
   await app.register(websocket);
   await app.register(import("@fastify/compress"), { global: true });
 
@@ -108,7 +111,7 @@ export async function createServer(isProduction: boolean) {
   });
 
   app.post<{ Body: { value: number; color: "black" | "white" | "random"; time: string } }>(
-    "api/create",
+    "/create",
     function handler(req, res) {
       // bound to fastify server
       // this.myDecoration.someFunc()
@@ -160,7 +163,7 @@ export async function createServer(isProduction: boolean) {
   );
 
   app.get<{ Params: { gameKey: string; playerId: string } }>(
-    "api/connect/:gameKey/:playerId",
+    "/connect/:gameKey/:playerId",
     { websocket: true },
     function handler(socket, req) {
       const { gameKey, playerId } = req.params;

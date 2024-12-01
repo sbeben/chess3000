@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for chess3000 on 2024-11-29T22:53:43+04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'chess3000'
+primary_region = 'waw'
+
+[build.args]
+ PUBLIC_ENV__HOST = 'https://chess3000.fly.dev'
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  max_machines_running = 1
+  processes = ['app']
+
+[[vm]]
+  size = 'shared-cpu-1x'

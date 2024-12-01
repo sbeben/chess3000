@@ -2,6 +2,8 @@ import type { Move } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample, scopeBind } from "effector";
 import type { BoardPosition } from "~/types/game";
 
+import { getWebSocketUrl } from "../utils/url";
+
 type WsServerEventType = "created" | "accepted" | "move" | "start" | "game_over" | "joined";
 type WsClientEventType = "create" | "join" | "ready" | "move" | "confirm_pick";
 
@@ -97,7 +99,7 @@ export const initWebsocketFx = createEffect<{ data: { gameKey: string; playerId:
   async ({ data }) => {
     //   if (!token) throw new Error("No token");
     //   const protocol = ["access_token", token];
-    const link = `ws://${import.meta.env.PUBLIC_ENV__BASE_URL}/api/connect/${data.gameKey}/${data.playerId}`;
+    const link = `${getWebSocketUrl(import.meta.env.PUBLIC_ENV__HOST || "http://0.0.0.0:4000")}connect/${data.gameKey}/${data.playerId}`;
     const socket = new WebSocket(link);
     let loaded = false;
     socket.addEventListener(
