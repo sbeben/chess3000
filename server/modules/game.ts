@@ -95,6 +95,11 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
       }
     } else if (type === "resign") {
       const { color, timestamp } = validate("resign", data);
+      const result = color === "white" ? "black" : "white";
+      send(otherPlayer.conn!, "game_over", { result });
+      send(player.conn!, "game_over", { result });
+
+      cleanupGame(gameKey);
     } else {
       console.log("Unknown message type:", type);
     }

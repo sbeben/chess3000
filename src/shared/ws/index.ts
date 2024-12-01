@@ -2,48 +2,13 @@ import type { Move } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample, scopeBind } from "effector";
 import type { BoardPosition } from "~/types/game";
 
+import { WS_CLIENT_COMMANDS_SCHEMA_DICT, type WsClientDataDict, type WsServerDataDict } from "../../../common/ws";
 import { getWebSocketUrl } from "../utils/url";
 
-type WsServerEventType = "created" | "accepted" | "move" | "start" | "game_over" | "joined";
-type WsClientEventType = "create" | "join" | "ready" | "move" | "confirm_pick";
+type WsServerEventType = keyof WsServerDataDict;
+type WsClientEventType = keyof WsClientDataDict;
 
-type WSMessage = {
-  type: WsServerEventType;
-  data:
-    | { playerColor: "black" | "white"; value: number; time: number; link?: string }
-    | { fen: string }
-    | { move: Move; timestamp: number }
-    | { result: "white" | "black" | "draw"; timestamp: number };
-};
-
-// {
-//   type: "created";
-//   data: { link: string; playerColor: "black" | "white"; value: number; gameKey: string; playerId: string };
-// };
-//   | { type: "joined" }
-// | { type: "accepted"; data: {} };
-//   | { type: "moved"; data: { playerId: string; from: string; to: string; success: boolean } };
-
-type WsClientDataDict = {
-  // server
-  create: {};
-  join: { gameKey: string; playerId: string };
-  ready: { fen: string };
-  move: { move: Move; timestamp: number };
-  confirm_pick: { position: BoardPosition };
-  // move: { from: string; to: string };
-};
-export type WsServerDataDict = {
-  // server
-  start: { fen: string };
-  finished: { result: "white" | "black" | "draw" };
-  created: { playerColor: "black" | "white"; value: number; time: number; link: string };
-  game_over: { result: "white" | "black" | "draw"; timestamp: number };
-  joined: { playerColor: "black" | "white"; value: number; time: number };
-  accepted: {};
-  move: { move: Move; timestamp: number };
-  started: {};
-};
+type WsMessage = { type: WsServerEventType; data: WsServerDataDict[WsServerEventType] };
 
 export function wsMessage<T extends WsServerEventType>(type: T, data?: WsServerDataDict[T]) {
   return { type, data: data! };
@@ -61,7 +26,7 @@ export const close = createEvent<number>();
 export const opened = createEvent();
 export const closed = createEvent<Event>();
 const rawMessageReceived = createEvent<string>();
-export const messageReceived = createEvent<WSMessage>();
+export const messageReceived = createEvent<WsMessage>();
 
 export const $socket = createStore<WebSocket | null>(null);
 export const $socketConnectionFail = createStore(false);
@@ -88,7 +53,7 @@ export const $isConnected = createStore(false)
 //     }
 //   }
 // })
-const validateMessageFx = createEffect<string, WSMessage>((raw: string) => {
+const validateMessageFx = createEffect<string, WsMessage>((raw: string) => {
   //TODO validate
   const res = JSON.parse(raw);
   if (res.error) throw new Error(res.error);
@@ -159,29 +124,6 @@ sample({
   clock: sendMessage,
   target: sendMessageFx,
 });
-// const decreaseRetries = createEvent()
-// const $retries = createStore(3).on(decreaseRetries, (retries) => retries - 1)
-
-// sample({
-//   clock: delay({
-//     source: merge([closed, initWebsocketFx.fail]),
-//     timeout: 1500,
-//   }),
-//   filter: $retries.map((retries) => retries > 0),
-//   source: $token,
-//   target: [reconnectFx, decreaseRetries],
-// })
-
-// sample({
-//   clock: reconnectFx.fail,
-//   fn: () => true,
-//   target: $socketConnectionFail,
-// })
-
-// sample({
-//   clock: reconnectFx.done,
-//   target: $socketConnectionFail.reinit,
-// })
 
 sample({
   clock: rawMessageReceived,
@@ -192,8 +134,3 @@ sample({
   clock: validateMessageFx.doneData,
   target: messageReceived,
 });
-
-// sample({
-//   clock: close,
-//   target: closeWsConnectionFx,
-// })

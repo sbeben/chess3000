@@ -1,10 +1,12 @@
 import * as Game from "~/game/model";
 import * as WsApi from "~/shared/ws";
-import type { Color } from "chess.js";
-import { sample } from "effector";
+import type { Color, Move } from "chess.js";
+import { createStore, sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
+import { resign } from "~/features/finish-game/model";
 
+import { type WsServerDataDict } from "../../../common/ws";
 import { pageStarted } from "./+pageStarted";
 
 export const gate = createGate();
@@ -33,7 +35,7 @@ sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "created",
   fn: ({ type, data }) => {
-    const { playerColor, value, time, link } = data as WsApi.WsServerDataDict["created"];
+    const { playerColor, value, time, link } = data as WsServerDataDict["created"];
     return { type: "created" as const, playerColor, value, time, link };
   },
   target: spread({
@@ -57,7 +59,7 @@ sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "joined",
   fn: ({ type, data }) => {
-    const { playerColor, value, time } = data as WsApi.WsServerDataDict["joined"];
+    const { playerColor, value, time } = data as WsServerDataDict["joined"];
     return { type: "pick" as const, playerColor, value, time };
   },
   target: spread({
@@ -95,7 +97,7 @@ sample({
   filter: (_, { type }) => type === "start",
   fn: (color, { data }) => {
     const playerColor = (color === "white" ? "w" : "b") as Color;
-    const { fen } = data as WsApi.WsServerDataDict["start"];
+    const { fen } = data as WsServerDataDict["start"];
     return { position: fen, display: fen, load: { fen, playerColor } };
   },
   target: spread({
@@ -116,17 +118,24 @@ sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "move",
   fn: ({ data }) => {
-    const { move, timestamp } = data as WsApi.WsServerDataDict["move"];
-    return { move };
+    const { move, timestamp } = data as WsServerDataDict["move"];
+    return { move: move as Move };
   },
   target: Game.$$state.opponentMoved,
+});
+
+sample({
+  clock: resign,
+  source: Game.$color,
+  fn: (color) => WsApi.createMessage("resign", { color: color!, timestamp: Date.now() }),
+  target: WsApi.sendMessage,
 });
 
 sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "game_over",
   fn: ({ data }) => {
-    const { result } = data as WsApi.WsServerDataDict["game_over"];
+    const { result } = data as WsServerDataDict["game_over"];
     return { status: "finished" as const, isOver: true, result };
   },
   target: spread({
