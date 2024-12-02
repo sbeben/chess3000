@@ -26,7 +26,7 @@ const squareStyles = {
     cursor: "pointer",
   },
   checkedKing: {
-    background: `radial-gradient(circle, 'rgba(255, 0, 0, 0.4)' 75%)`,
+    background: "rgba(255, 0, 0, 0.4)",
   },
 };
 
@@ -77,20 +77,17 @@ export function Page() {
           ...(game.get(move.to) ? squareStyles.captureMove : squareStyles.validMove),
         };
       });
-
-      if (game.isCheck()) {
-        console.log("here");
-        const kingSquare = game
-          .board()
-          .flat()
-          .find((square) => square?.type === "k" && square.color === game.turn())?.square;
-        console.log("kingSquareFound", kingSquare);
-        if (kingSquare) {
-          styles[kingSquare] = {
-            ...squareStyles.checkedKing,
-            ...(styles[kingSquare] || {}),
-          };
-        }
+    }
+    if (game.isCheck()) {
+      const kingSquare = game
+        .board()
+        .flat()
+        .find((square) => square?.type === "k" && square.color === game.turn())?.square;
+      if (kingSquare) {
+        styles[kingSquare] = {
+          ...squareStyles.checkedKing,
+          ...(styles[kingSquare] || {}),
+        };
       }
     }
 

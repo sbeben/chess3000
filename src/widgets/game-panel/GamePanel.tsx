@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import * as Game from "~/game/model";
 import { useUnit } from "effector-react";
+import { resign as resignEvent } from "~/features/finish-game/model";
 
 export const GamePanel = () => {
   const {
@@ -22,7 +23,7 @@ export const GamePanel = () => {
     totalMoves: Game.$totalMoves,
     notation: Game.$notation,
     switchOrientation: Game.switchOrientation,
-    resign: Game.$$state.resign,
+    resign: resignEvent,
     offerDraw: Game.$$state.offerDraw,
     backward: Game.backward,
     forward: Game.forward,
