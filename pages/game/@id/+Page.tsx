@@ -32,6 +32,7 @@ const squareStyles = {
 
 export function Page() {
   const {
+    pieceDrop,
     sparePieceDrop,
     value,
     color,
@@ -48,6 +49,7 @@ export function Page() {
     selectedSquare,
     squareClicked,
   } = useUnit({
+    pieceDrop: Game.pieceDropped,
     sparePieceDrop: sparePieceDropped,
     pieceDroppedOff: Game.pieceDroppedOffBoard,
     value: Game.$value,
@@ -117,12 +119,7 @@ export function Page() {
               id="ManualBoardEditor"
               position={["created", "pick"].includes(status) ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)}
               onPieceDrop={(from, to, piece) => {
-                if (status === "pick") {
-                  const { [from]: piece, ...rest } = pregamePosition!;
-                  positionChanged({ ...rest, [to]: piece });
-                } else {
-                  move({ from, to, promotion: piece[1]?.toLowerCase() });
-                }
+                pieceDrop({ from, to, piece });
                 return true;
               }}
               isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color![0]}

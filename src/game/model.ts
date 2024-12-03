@@ -1,10 +1,12 @@
 import { invoke } from "@withease/factories";
 import { Chess } from "chess.js";
 import { createEvent, createStore, restore, sample } from "effector";
-import { and, not, or } from "patronum";
+import { and, condition, debug, equals, not, or } from "patronum";
 import type { BoardPosition, Piece, Square } from "~/types/game";
 
 import { createChess } from "./factory";
+
+type PieceDrop = { piece: Piece; from: Square; to: Square };
 
 export const values = {
   P: 1,
@@ -30,7 +32,9 @@ export const $time = createStore<number | null>(null);
 
 //pick events
 export const sparePieceDropped = createEvent<{ piece: Piece; square: Square }>();
+const pieceDroppedWhilePick = createEvent<PieceDrop>();
 export const pieceDroppedOffBoard = createEvent<{ piece: Piece; square: Square }>();
+
 export const picked = createEvent();
 export const opponentPicked = createEvent();
 
@@ -52,6 +56,7 @@ export const $currentMove = createStore<number>(0);
 export const $totalMoves = createStore<number>(0);
 
 //common events and stores
+export const pieceDropped = createEvent<PieceDrop>();
 export const positionChanged = createEvent<BoardPosition>();
 
 export const $value = createStore(35);
@@ -139,4 +144,30 @@ sample({
   target: $isKingOnBoard,
 });
 
-positionChanged.watch(console.log);
+condition({
+  source: pieceDropped,
+  if: equals($status, "pick"),
+  then: pieceDroppedWhilePick,
+  else: $$state.move.prepend(({ piece, from, to }: PieceDrop) => ({ from, to, promotion: piece[1]?.toLowerCase() })),
+});
+
+sample({
+  clock: pieceDroppedWhilePick,
+  source: $positionObject,
+  filter: (position, { to }) => Boolean(position?.[to]),
+  fn: (position, { to }) => ({ piece: position![to]!, square: to }),
+  target: pieceDroppedOffBoard,
+});
+
+sample({
+  clock: pieceDroppedWhilePick,
+  source: $positionObject,
+  fn: (position, { from, to }) => {
+    const { [from]: p, ...rest } = position!;
+    return {
+      ...rest,
+      [to]: p,
+    };
+  },
+  target: positionChanged,
+});
