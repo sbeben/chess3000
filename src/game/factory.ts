@@ -1,7 +1,7 @@
 import { createFactory } from "@withease/factories";
 import { Chess, type Color, type Move, type Piece, type Square } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample } from "effector";
-import { condition, debug, not } from "patronum";
+import { and, condition, debug, not } from "patronum";
 
 export type MoveEvent = { from: Square; to: Square; promotion?: string };
 
@@ -33,10 +33,30 @@ export const createChess = createFactory(() => {
   const declineDraw = createEvent();
   const resign = createEvent();
 
-  const squareClicked = createEvent<Square>();
+  const squareClicked = createEvent<{ square: Square; piece: Piece | null }>();
   const pieceSelected = createEvent<Square | null>();
   const $selectedSquare = createStore<Square | null>(null);
   const $validMoves = createStore<Move[]>([]);
+
+  const $scheduledPromotion = createStore<MoveEvent | null>(null);
+  //TODO this is for handling bug when promotion window does not get closed after click outside of it (only for onClick moves, drop works fine)
+  //does not work anway :(
+  const $shouldShowPromotion = createStore<boolean>(true);
+  const retriggerSowPromotion = createEvent();
+  sample({
+    clock: retriggerSowPromotion,
+    fn: () => false,
+    target: $shouldShowPromotion,
+  });
+  sample({
+    clock: $shouldShowPromotion.updates,
+    filter: (v) => !v,
+    fn: () => true,
+    target: $shouldShowPromotion,
+  });
+  //
+
+  const promotionPieceSelected = createEvent<Piece>();
 
   const $isKingChecked = createStore<"w" | "b" | null>(null);
 
@@ -46,7 +66,7 @@ export const createChess = createFactory(() => {
     effect: createEffect<{ chess: Chess; move: { from: Square; to: Square } }, { chess: Chess; move: Move | string }>(
       ({ chess, move }) => {
         const copy = clone(chess);
-        console.log({ copy, move });
+        // console.log({ copy, move });
         const validMove = copy.move(move);
         return { chess: copy, move: validMove };
       },
@@ -59,7 +79,7 @@ export const createChess = createFactory(() => {
     effect: createEffect<{ chess: Chess; move: MoveEvent }, { chess: Chess; move: Move | string }>(
       ({ chess, move }) => {
         const copy = clone(chess);
-        console.log({ copy, move });
+        // console.log({ copy, move });
         const validMove = copy.move(move);
         return { chess: copy, move: validMove };
       },
@@ -149,6 +169,60 @@ export const createChess = createFactory(() => {
     target: moved,
   });
   //
+  const validMoveSquareClicked = sample({
+    clock: squareClicked,
+    source: {
+      chess: $chess,
+      selectedSquare: $selectedSquare,
+      validMoves: $validMoves,
+    },
+    filter: ({ selectedSquare, validMoves }, { square: squareClicked }) =>
+      Boolean(selectedSquare) && validMoves.length > 0 && validMoves.some((move) => move.to === squareClicked),
+    fn: ({ chess, selectedSquare, validMoves }, { square: clickedSquare }) =>
+      ({
+        promotion: validMoves.find((move) => move.to === clickedSquare)?.promotion,
+        from: selectedSquare!,
+        to: clickedSquare,
+      }) as MoveEvent,
+    // target: move,
+  });
+
+  condition({
+    //@ts-expect-error
+    source: validMoveSquareClicked,
+    if: ({ promotion }) => Boolean(promotion),
+    then: $scheduledPromotion,
+    else: move,
+  });
+
+  sample({
+    clock: promotionPieceSelected,
+    // filter: $scheduledPromotion.map(Boolean),
+    source: $scheduledPromotion,
+    filter: (scheduled, promotion) => !!scheduled && !!promotion,
+    fn: (move, piece) => ({
+      from: move!.from,
+      to: move!.to,
+      promotion: (piece as unknown as string)[1]?.toLowerCase(),
+    }),
+    target: move,
+  });
+
+  sample({
+    // clock: squareClicked,
+    // source: $scheduledPromotion,
+    // filter: (promotion, { square }) => !!promotion && promotion.to !== square,
+    clock: promotionPieceSelected,
+    filter: (v) => !v,
+    target: [$scheduledPromotion.reinit, retriggerSowPromotion],
+  });
+
+  //TODO add outside click to clock
+  sample({
+    clock: [moveFx.done, moveFx.fail],
+    target: $scheduledPromotion.reinit,
+  });
+
   sample({
     clock: squareClicked,
     source: {
@@ -156,7 +230,7 @@ export const createChess = createFactory(() => {
       selectedSquare: $selectedSquare,
       chess: $chess,
     },
-    fn: ({ selectedSquare, chess, playerColor }, clickedSquare) => {
+    fn: ({ selectedSquare, chess, playerColor }, { square: clickedSquare }) => {
       // If we click the same square twice, deselect it
       if (selectedSquare === clickedSquare) {
         return null;
@@ -209,6 +283,11 @@ export const createChess = createFactory(() => {
     squareClicked,
     $selectedSquare,
     $validMoves,
+    $scheduledPromotion,
+    promotionPieceSelected,
+    pieceSelected,
+    validMoveSquareClicked,
+    move,
     // load,
     // loadFx,
     // move,
@@ -254,10 +333,11 @@ export const createChess = createFactory(() => {
     $insufficientMaterial,
     $inThreefoldRepetition,
     $history,
-
+    $scheduledPromotion,
+    $shouldShowPromotion,
     //
     squareClicked,
-
+    promotionPieceSelected,
     $selectedSquare,
     $validMoves,
   };

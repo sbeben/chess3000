@@ -35,7 +35,7 @@ sample({
   filter: ({ type }) => type === "created",
   fn: ({ type, data }) => {
     const { playerColor, value, time, link } = data as WsServerDataDict["created"];
-    return { type: "created" as const, playerColor, value, time, link };
+    return { type: "created" as const, playerColor, value, time, link, orientation: playerColor };
   },
   target: spread({
     type: Game.$status,
@@ -43,6 +43,7 @@ sample({
     value: Game.$value,
     time: Game.$time,
     link: Game.$inviteLink,
+    orientation: Game.$boardOrientation,
   }),
 });
 
@@ -59,13 +60,14 @@ sample({
   filter: ({ type }) => type === "joined",
   fn: ({ type, data }) => {
     const { playerColor, value, time } = data as WsServerDataDict["joined"];
-    return { type: "pick" as const, playerColor, value, time };
+    return { type: "pick" as const, playerColor, value, time, orientation: playerColor };
   },
   target: spread({
     type: Game.$status,
     playerColor: Game.$color,
     value: Game.$value,
     time: Game.$time,
+    orientation: Game.$boardOrientation,
     // link: Game.$inviteLink,
   }),
 });

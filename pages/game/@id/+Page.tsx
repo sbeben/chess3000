@@ -48,6 +48,11 @@ export function Page() {
     validMoves,
     selectedSquare,
     squareClicked,
+    promotionSelect,
+    scheduledPromotion,
+    showPromotionDialog,
+    //
+    orientation,
   } = useUnit({
     pieceDrop: Game.pieceDropped,
     sparePieceDrop: sparePieceDropped,
@@ -66,6 +71,11 @@ export function Page() {
     squareClicked: Game.$$state.squareClicked,
     validMoves: Game.$$state.$validMoves,
     selectedSquare: Game.$$state.$selectedSquare,
+    promotionSelect: Game.$$state.promotionPieceSelected,
+    scheduledPromotion: Game.$$state.$scheduledPromotion,
+    showPromotionDialog: Game.$$state.$shouldShowPromotion,
+    //
+    orientation: Game.$boardOrientation,
   });
   useGate(gate);
   const getSquareStyles = (): CustomSquareStyles => {
@@ -123,11 +133,24 @@ export function Page() {
                 return true;
               }}
               isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color![0]}
-              onSquareClick={(square) => squareClicked(square)}
+              //@ts-expect-error
+              onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
+              onPromotionPieceSelect={(pr, from, to) => {
+                console.log({ pr, from, to });
+                //@ts-expect-error
+                promotionSelect(pr || null);
+                return true;
+              }}
               // getPositionObject={(p) => positionChanged(p)}
               boardWidth={400}
-              showPromotionDialog={true}
-              boardOrientation={color ?? "white"}
+              showPromotionDialog={showPromotionDialog}
+              promotionToSquare={!!scheduledPromotion ? scheduledPromotion.to || undefined : undefined}
+              // onPromotionCheck={(_, __, piece) => {
+              //   console.log({ promotionPiece: piece });
+
+              //   return true;
+              // }}
+              boardOrientation={orientation}
               showBoardNotation={true}
               dropOffBoardAction={status === "pick" ? "trash" : "snapback"}
               onSparePieceDrop={(piece, square) => {

@@ -46,7 +46,6 @@ export const $isConfirmDisabled = or(not($isKingOnBoard), $isPickConfirmed);
 
 //game events
 
-export const switchOrientation = createEvent();
 export const backward = createEvent();
 export const forward = createEvent();
 
@@ -62,6 +61,9 @@ export const positionChanged = createEvent<BoardPosition>();
 export const $value = createStore(35);
 
 export const $color = createStore<"black" | "white" | null>(null);
+
+export const switchOrientation = createEvent();
+export const $boardOrientation = createStore<"white" | "black">("white");
 
 const $whiteTime = createStore<number | null>(null);
 const $blackTime = createStore<number | null>(null);
@@ -93,6 +95,22 @@ const kingDroppedOff = sample({
   filter: ({ piece }) => getPieceValue(piece) === 0,
 });
 
+const sparePieceDroppedOnKing = sample({
+  clock: sparePieceDropped,
+  source: $positionObject,
+  filter: (position, { square }) => !!position && !!position[square] && getPieceValue(position[square]) === 0,
+});
+
+//when dropped on occupied square
+sample({
+  clock: sparePieceDropped,
+  source: { value: $value, position: $positionObject },
+  filter: ({ position }, { square }) => !!position && !!position[square],
+  fn: ({ value, position }, { square }) => value + getPieceValue(position![square]!),
+  target: $value,
+});
+
+//when dropped on empty square
 sample({
   clock: sparePieceDropped,
   source: $value,
@@ -105,8 +123,9 @@ sample({
 
 sample({
   clock: sparePieceDropped,
-  source: $positionObject,
-  fn: (position, { piece, square }) => ({
+  source: { value: $value, position: $positionObject },
+  filter: ({ value }, { piece }) => value > 0 && getPieceValue(piece) <= value,
+  fn: ({ position }, { piece, square }) => ({
     ...position,
     [square]: piece,
   }),
@@ -138,7 +157,7 @@ sample({
 });
 
 sample({
-  clock: kingDroppedOff,
+  clock: [kingDroppedOff, sparePieceDroppedOnKing],
   filter: $isKingOnBoard,
   fn: () => false,
   target: $isKingOnBoard,
@@ -171,3 +190,12 @@ sample({
   },
   target: positionChanged,
 });
+
+sample({
+  clock: switchOrientation,
+  source: $boardOrientation,
+  fn: (boardOrientation) => (boardOrientation === "white" ? "black" : "white"),
+  target: $boardOrientation,
+});
+
+$positionObject.updates.watch(console.log);

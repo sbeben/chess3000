@@ -19,7 +19,7 @@ export const PickPieces = ({ color, value, isKingActive }: Props) => {
     <div style={{ display: "flex", gap: "8px", flexDirection: "column", width: "fit-content" }}>
       <h2>Remaining points: {value}</h2>
       {["K", "Q", "R", "B", "N", "P"].map((piece, i) => (
-        <div key={`${piece}_${i}`} style={{ display: "flex", gap: "4px" }}>
+        <div key={`${piece}_${i}`} style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           <div
             style={{
               width: "fit-content",
