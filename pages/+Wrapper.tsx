@@ -1,8 +1,9 @@
 import type React from "react";
 
 import { fork } from "effector";
-import { Provider } from "effector-react";
+import { Provider, useUnit } from "effector-react";
 import { usePageContext } from "vike-react/usePageContext";
+import { clientNavigate } from "~/shared/routing";
 import { colors } from "~/shared/ui/colors";
 import { Heading } from "~/shared/ui/components/Heading";
 
@@ -10,7 +11,7 @@ import "./globals.css";
 
 export default function WrapperEffector({ children }: { children: React.ReactNode }) {
   const { scopeValues } = usePageContext();
-
+  const goTo = useUnit(clientNavigate);
   return (
     <Provider value={fork({ values: scopeValues })}>
       <div
@@ -46,7 +47,9 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
               }}
             >
               <Heading
+                onClick={() => goTo("/")}
                 style={{
+                  cursor: "pointer",
                   marginTop: "48px",
                 }}
               >

@@ -1,8 +1,7 @@
 import path from "node:path";
 
 import type { CookieSerializeOptions } from "@fastify/cookie";
-import websocket, { type WebSocket } from "@fastify/websocket";
-import { Chess } from "chess.js";
+import websocket from "@fastify/websocket";
 import "dotenv/config";
 import fastify from "fastify";
 import type { FastifyReply, FastifyRequest } from "fastify";
@@ -11,7 +10,7 @@ import { renderPage } from "vike/server";
 import { CONFIG } from "./config.js";
 import { directoryRoot } from "./directory-root.js";
 import { applyFlyProxy } from "./fly-proxy.js";
-import { createGameCommands } from "./modules/game.js";
+import { createGameCommands, createGameRoom } from "./modules/game.js";
 import { WSMap, parse, send, validate } from "./modules/ws.js";
 import { FEN, customToFen } from "./utils/chess.js";
 import { parseTime } from "./utils/time.js";
@@ -125,21 +124,11 @@ export async function createServer(isProduction: boolean) {
       const playerId = Math.random().toString(36).substring(2, 15);
 
       // The WebSocket connection is not open at this point, it opens in /game route
-      WSMap[gameKey] = {
-        players: { [playerId]: { conn: null, color: playerColor, pick: null } },
-        game: new Chess(),
-        value,
-        status: "created",
-        turn: "white",
-        time: { white: parseTime(time), black: parseTime(time), initial: parseTime(time) },
-      };
-      console.log({ [gameKey]: WSMap[gameKey] });
+      WSMap[gameKey] = createGameRoom({ gameKey, playerId, playerColor, value, time });
+      console.log("game created", WSMap[gameKey]);
       res.status(201).send({
-        // link: createInviteLink(gameKey, req),
         gameKey,
         playerId,
-        // playerColor: playerColor as "black" | "white",
-        // value,
       });
     },
   );
@@ -167,7 +156,7 @@ export async function createServer(isProduction: boolean) {
     { websocket: true },
     function handler(socket, req) {
       const { gameKey, playerId } = req.params;
-      console.log({ gameKey, playerId });
+
       if (!gameKey || !playerId) {
         socket.close();
         return;

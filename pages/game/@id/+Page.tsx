@@ -161,9 +161,10 @@ export function Page() {
           {status === "pick" && (
             <PickPieces color={color ?? "white"} value={value ?? 25} isKingActive={!isKingOnBoard} />
           )}
+          {status === "game" && <GamePanel />}
         </div>
       </DnDProvider>
-      {status === "game" && <GamePanel />}
+
       {status === "created" && <SendInviteDialog />}
       {status === "finished" && <EndgameDialog />}
     </div>

@@ -4,7 +4,6 @@ import type { Color, Move } from "chess.js";
 import { createStore, sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
-import { resign } from "~/features/finish-game/model";
 
 import { type WsServerDataDict } from "../../../common/ws";
 import { pageStarted } from "./+pageStarted";
@@ -79,11 +78,6 @@ sample({
   target: WsApi.sendMessage,
 });
 
-// sample({
-//   clock: WsApi.messageReceived,
-//   filter: ({ type }) => type === "confirm_pick",
-// })
-
 sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "start",
@@ -106,41 +100,4 @@ sample({
     load: Game.$$state.load,
   }),
   //[, Game.$displayedPosition, Game.$$state.load],
-});
-
-sample({
-  clock: Game.$$state.moved,
-  fn: (move) => WsApi.createMessage("move", { move: move!, timestamp: Date.now() }),
-  target: WsApi.sendMessage,
-});
-
-sample({
-  clock: WsApi.messageReceived,
-  filter: ({ type }) => type === "move",
-  fn: ({ data }) => {
-    const { move, timestamp } = data as WsServerDataDict["move"];
-    return { move: move as Move };
-  },
-  target: Game.$$state.opponentMoved,
-});
-
-sample({
-  clock: resign,
-  source: Game.$color,
-  fn: (color) => WsApi.createMessage("resign", { color: color!, timestamp: Date.now() }),
-  target: WsApi.sendMessage,
-});
-
-sample({
-  clock: WsApi.messageReceived,
-  filter: ({ type }) => type === "game_over",
-  fn: ({ data }) => {
-    const { result } = data as WsServerDataDict["game_over"];
-    return { status: "finished" as const, isOver: true, result };
-  },
-  target: spread({
-    status: Game.$status,
-    result: Game.$$state.$result,
-    isOver: Game.$$state.$isOver,
-  }),
 });

@@ -30,11 +30,14 @@ export const WS_SERVER_COMMANDS_SCHEMA_DICT = z.object({
     }),
     timestamp: z.number(),
   }),
+  draw_offer: z.object({ color: z.enum(["white", "black"]), timestamp: z.number() }).strict(),
+  draw_decline: z.object({ timestamp: z.number() }).strict(),
   game_over: z
     .object({
       result: z.enum(["white", "black", "draw"]),
     })
     .strict(),
+  error: z.object({ message: z.string() }).strict(),
 });
 
 export const WS_CLIENT_COMMANDS_SCHEMA_DICT = z.object({
@@ -51,7 +54,7 @@ export const WS_CLIENT_COMMANDS_SCHEMA_DICT = z.object({
     })
     .strict(),
   resign: z.object({ color: z.enum(["black", "white"]), timestamp: z.number() }).strict(),
-  draw_offer: z.object({ color: z.string(), timestamp: z.number() }).strict(),
+  draw_offer: z.object({ color: z.enum(["white", "black"]), timestamp: z.number() }).strict(),
   draw_decline: z.object({ timestamp: z.number() }).strict(),
   draw_accept: z.object({ timestamp: z.number() }).strict(),
 });

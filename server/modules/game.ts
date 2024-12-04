@@ -1,6 +1,9 @@
 import { type WebSocket } from "@fastify/websocket";
+import { Chess } from "chess.js";
 
+import type { GameRoom } from "../types.js";
 import { customToFen } from "../utils/chess.js";
+import { parseTime } from "../utils/time.js";
 import { WSMap, parse, send, validate } from "./ws.js";
 
 interface CleanupOptions {
@@ -8,6 +11,30 @@ interface CleanupOptions {
   reason?: string;
   code?: number;
   notifyPlayers?: boolean;
+}
+
+export function createGameRoom({
+  gameKey,
+  playerId,
+  playerColor,
+  value,
+  time,
+}: {
+  gameKey: string;
+  playerId: string;
+  playerColor: "black" | "white";
+  value: number;
+  time: string;
+}): GameRoom {
+  return {
+    players: { [playerId]: { conn: null, color: playerColor, pick: null } },
+    game: new Chess(),
+    value,
+    status: "created",
+    turn: "white",
+    time: { white: parseTime(time), black: parseTime(time), initial: parseTime(time) },
+    isDrawOffered: null,
+  };
 }
 
 export function cleanupGame(gameKey: string) {
@@ -68,30 +95,61 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
           gameRoom.status = "game";
         }
       } else {
-        // send other player pick event
+        // send "other player picked"event
       }
     } else if (type === "move") {
       const { move, timestamp } = validate("move", data);
 
-      const correctMove = game.move(move);
+      try {
+        const correctMove = game.move(move);
 
-      if (game.isGameOver()) {
-        let result: "white" | "black" | "draw" = game.isCheckmate()
-          ? game.turn() === "w"
-            ? "black"
-            : "white"
-          : "draw";
+        if (game.isGameOver()) {
+          let result: "white" | "black" | "draw" = game.isCheckmate()
+            ? game.turn() === "w"
+              ? "black"
+              : "white"
+            : "draw";
 
-        send(otherPlayer.conn!, "move", { move: correctMove, timestamp: Date.now() });
-        send(otherPlayer.conn!, "game_over", { result });
-        send(player.conn!, "game_over", { result });
+          send(otherPlayer.conn!, "move", { move: correctMove, timestamp: Date.now() });
+          send(otherPlayer.conn!, "game_over", { result });
+          send(player.conn!, "game_over", { result });
+
+          cleanupGame(gameKey);
+        } else {
+          send(otherPlayer!.conn!, "move", {
+            move: correctMove,
+            timestamp: Date.now(),
+          });
+          if (gameRoom.isDrawOffered) {
+            gameRoom.isDrawOffered = null;
+          }
+        }
+      } catch (e) {
+        send(otherPlayer.conn!, "error", { message: (e as Error).message });
+      }
+    } else if (type === "draw_offer") {
+      const { color, timestamp } = validate("draw_offer", data);
+
+      if (!gameRoom.isDrawOffered) {
+        gameRoom.isDrawOffered = color;
+
+        send(otherPlayer.conn!, "draw_offer", { color, timestamp });
+      }
+    } else if (type === "draw_decline") {
+      const { timestamp } = validate("draw_decline", data);
+
+      if (gameRoom.isDrawOffered) {
+        gameRoom.isDrawOffered = null;
+        send(otherPlayer.conn!, "draw_decline", { timestamp });
+      }
+    } else if (type === "draw_accept") {
+      const { timestamp } = validate("draw_accept", data);
+
+      if (gameRoom.isDrawOffered) {
+        send(otherPlayer.conn!, "game_over", { result: "draw" });
+        send(player.conn!, "game_over", { result: "draw" });
 
         cleanupGame(gameKey);
-      } else {
-        send(otherPlayer!.conn!, "move", {
-          move: correctMove,
-          timestamp: Date.now(),
-        });
       }
     } else if (type === "resign") {
       const { color, timestamp } = validate("resign", data);

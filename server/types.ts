@@ -13,6 +13,7 @@ export type GameRoom = {
     white: number;
     black: number;
   };
+  isDrawOffered: "black" | "white" | null;
 };
 
 export type WSMapType = Record<string, GameRoom>;
