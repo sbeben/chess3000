@@ -4,8 +4,13 @@ export function Head() {
       <title>chess3000</title>
       <link
         rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Cdefs%3E%3CradialGradient id='grad'%3E%3Cstop offset='0%25' stop-color='%239cfc24'/%3E%3Cstop offset='70%25' stop-color='transparent'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='60' r='60' fill='url(%23grad)'/%3E%3Ctext y='.9em' font-size='90'%3E♟️%3C/text%3E%3C/svg%3E"
+      />
+
+      {/* <link
+        rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♟️</text></svg>"
-      ></link>
+      ></link> */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link

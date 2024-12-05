@@ -1,3 +1,5 @@
+import { useEffect, useLayoutEffect, useState } from "react";
+
 import * as Game from "~/game/model";
 import { useGate, useUnit } from "effector-react";
 import { EndgameDialog } from "~/features/finish-game/EndgameDialog";
@@ -5,6 +7,7 @@ import { SendInviteDialog } from "~/features/handle-invite/SendInviteDialog";
 import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { FEN, sparePieceDropped } from "~/game/model";
 import { Board, DnDProvider } from "~/game/parts";
+import { colors } from "~/shared/ui/colors";
 import { GamePanel } from "~/widgets/game-panel/GamePanel";
 
 import { gate } from "./model";
@@ -15,7 +18,7 @@ interface CustomSquareStyles {
 
 const squareStyles = {
   selectedSquare: {
-    backgroundColor: "rgba(255, 255, 0, 0.4)",
+    backgroundColor: colors.green_yellow.DEFAULT,
   },
   validMove: {
     background: `radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)`,
@@ -26,11 +29,32 @@ const squareStyles = {
     cursor: "pointer",
   },
   checkedKing: {
-    background: "rgba(255, 0, 0, 0.4)",
+    background: colors.red.DEFAULT,
   },
 };
 
+const isLightSquare = (square: string): boolean => {
+  const file = square.charCodeAt(0) - "a".charCodeAt(0);
+  const rank = parseInt(square[1]!) - 1;
+  return (file + rank) % 2 === 0;
+};
+
 export function Page() {
+  const [windowWidth, setWindowWidth] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useLayoutEffect(() => {
+    setIsMounted(true);
+    setWindowWidth(window.innerWidth);
+
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const {
     pieceDrop,
     sparePieceDrop,
@@ -44,14 +68,12 @@ export function Page() {
     pregamePosition,
     game,
     move,
-    //
     validMoves,
     selectedSquare,
     squareClicked,
     promotionSelect,
     scheduledPromotion,
     showPromotionDialog,
-    //
     orientation,
   } = useUnit({
     pieceDrop: Game.pieceDropped,
@@ -63,23 +85,31 @@ export function Page() {
     status: Game.$status,
     positionChanged: Game.positionChanged,
     pregamePosition: Game.$positionObject,
-    //
     position: Game.$$state.$fen,
     game: Game.$$state.$chess,
     move: Game.$$state.move,
-    //
     squareClicked: Game.$$state.squareClicked,
     validMoves: Game.$$state.$validMoves,
     selectedSquare: Game.$$state.$selectedSquare,
     promotionSelect: Game.$$state.promotionPieceSelected,
     scheduledPromotion: Game.$$state.$scheduledPromotion,
     showPromotionDialog: Game.$$state.$shouldShowPromotion,
-    //
     orientation: Game.$boardOrientation,
   });
+
   useGate(gate);
+
   const getSquareStyles = (): CustomSquareStyles => {
     const styles: CustomSquareStyles = {};
+
+    // for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
+    //   for (let rank = 1; rank <= 8; rank++) {
+    //     const square = `${String.fromCharCode(file)}${rank}`;
+    //     styles[square] = {
+    //       backgroundColor: isLightSquare(square) ? colors.white.DEFAULT : colors.blue.DEFAULT,
+    //     };
+    //   }
+    // }
 
     if (selectedSquare) {
       styles[selectedSquare] = squareStyles.selectedSquare;
@@ -90,6 +120,7 @@ export function Page() {
         };
       });
     }
+
     if (game.isCheck()) {
       const kingSquare = game
         .board()
@@ -105,13 +136,22 @@ export function Page() {
 
     return styles;
   };
+
+  const calculateBoardWidth = () => {
+    if (!isMounted) return 400;
+    const padding = 0; // 16px padding on each side
+    const maxWidth = 600;
+    return Math.min(windowWidth - padding, maxWidth);
+  };
+
   return (
     <div
       style={{
         height: "100%",
         width: "100%",
         display: "flex",
-        justifyContent: "center",
+        paddingTop: "40px",
+        justifyContent: "flex-start",
         alignItems: "center",
         flexDirection: "column",
       }}
@@ -121,10 +161,21 @@ export function Page() {
           style={{
             display: "flex",
             alignItems: "center",
+            justifyContent: windowWidth <= 768 ? "flex-start" : "center",
+            flexDirection: windowWidth <= 768 ? "column" : "row",
             gap: "16px",
+            maxWidth: "864px",
+            width: "100%",
           }}
         >
-          <div style={{ position: "relative", height: "fit-content", width: "fit-content" }}>
+          <div
+            style={{
+              position: "relative",
+              height: "fit-content",
+              width: "fit-content",
+              maxWidth: "100%",
+            }}
+          >
             <Board
               id="ManualBoardEditor"
               position={["created", "pick"].includes(status) ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)}
@@ -136,20 +187,13 @@ export function Page() {
               //@ts-expect-error
               onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
               onPromotionPieceSelect={(pr, from, to) => {
-                console.log({ pr, from, to });
                 //@ts-expect-error
                 promotionSelect(pr || null);
                 return true;
               }}
-              // getPositionObject={(p) => positionChanged(p)}
-              boardWidth={400}
+              boardWidth={calculateBoardWidth()}
               showPromotionDialog={showPromotionDialog}
               promotionToSquare={!!scheduledPromotion ? scheduledPromotion.to || undefined : undefined}
-              // onPromotionCheck={(_, __, piece) => {
-              //   console.log({ promotionPiece: piece });
-
-              //   return true;
-              // }}
               boardOrientation={orientation}
               showBoardNotation={true}
               dropOffBoardAction={status === "pick" ? "trash" : "snapback"}
@@ -167,6 +211,7 @@ export function Page() {
               }}
               onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
               customSquareStyles={getSquareStyles()}
+              customNotationStyle={{ color: colors.red.DEFAULT }}
             />
             {status === "pick" && (
               <div
@@ -181,10 +226,12 @@ export function Page() {
               />
             )}
           </div>
-          {status === "pick" && (
-            <PickPieces color={color ?? "white"} value={value ?? 25} isKingActive={!isKingOnBoard} />
-          )}
-          {status === "game" && <GamePanel />}
+          <div style={{ width: windowWidth <= 768 ? "100%" : "auto" }}>
+            {status === "pick" && (
+              <PickPieces color={color ?? "white"} value={value ?? 25} isKingActive={!isKingOnBoard} />
+            )}
+            {status === "game" && <GamePanel />}
+          </div>
         </div>
       </DnDProvider>
 

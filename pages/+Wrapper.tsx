@@ -67,7 +67,7 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
         >
          
         </div> */}
-          <div style={{ height: "100%", width: "100%" }}>{children}</div>
+          <div style={{ height: "100%", width: "100%", overflowY: "scroll" }}>{children}</div>
         </div>
       </div>
     </Provider>

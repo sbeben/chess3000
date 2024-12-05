@@ -17,6 +17,7 @@ export const createChess = createFactory(() => {
   const $chess = createStore<Chess>(initialChess);
   const $playerColor = createStore<Color>("w");
 
+  const $isStarted = createStore(false);
   const $isOver = createStore(false);
   const $result = createStore<"white" | "black" | "draw" | null>(null);
 
@@ -230,6 +231,7 @@ export const createChess = createFactory(() => {
       selectedSquare: $selectedSquare,
       chess: $chess,
     },
+    filter: $isStarted,
     fn: ({ selectedSquare, chess, playerColor }, { square: clickedSquare }) => {
       // If we click the same square twice, deselect it
       if (selectedSquare === clickedSquare) {
@@ -307,6 +309,7 @@ export const createChess = createFactory(() => {
   );
   return {
     // Events for triggering actions
+
     move: move,
     undo: undo,
     load: load,
@@ -320,6 +323,7 @@ export const createChess = createFactory(() => {
     //
     moved,
     // Stores for chess data
+    $isStarted,
     $playerColor,
     $chess,
     $isOver,

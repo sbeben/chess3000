@@ -198,4 +198,18 @@ sample({
   target: $boardOrientation,
 });
 
+sample({
+  clock: $status.updates,
+  filter: (status) => status === "game",
+  fn: () => true,
+  target: $$state.$isStarted,
+});
+
+sample({
+  clock: $status.updates,
+  filter: (status) => status === "finished",
+  fn: () => false,
+  target: $$state.$isStarted,
+});
+
 $positionObject.updates.watch(console.log);
