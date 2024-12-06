@@ -13,13 +13,15 @@ export const moveReceived = sample({
 sample({
   clock: $$state.moved,
   filter: equals($$state.$playerColor, "w"),
-  target: time.white.stop.prepend(() => ({ offset: 0 })),
+  fn: () => ({ offset: 0 }),
+  target: [time.white.stop, time.black.start],
 });
 
 sample({
   clock: $$state.moved,
   filter: equals($$state.$playerColor, "b"),
-  target: time.black.stop.prepend(() => ({ offset: 0 })),
+  fn: () => ({ offset: 0 }),
+  target: [time.black.stop, time.white.start],
 });
 
 sample({
