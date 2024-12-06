@@ -13,7 +13,7 @@ import { applyFlyProxy } from "./fly-proxy.js";
 import { createGameCommands, createGameRoom } from "./modules/game.js";
 import { WSMap, parse, send, validate } from "./modules/ws.js";
 import { FEN, customToFen } from "./utils/chess.js";
-import { parseTime } from "./utils/time.js";
+import { Timer, parseTime } from "./utils/time.js";
 import { createInviteLink } from "./utils/url.js";
 
 export async function createServer(isProduction: boolean) {
@@ -109,29 +109,28 @@ export async function createServer(isProduction: boolean) {
     }
   });
 
-  app.post<{ Body: { value: number; color: "black" | "white" | "random"; time: string } }>(
-    "/create",
-    function handler(req, res) {
-      // bound to fastify server
-      // this.myDecoration.someFunc()
+  app.post<{
+    Body: { value: number; color: "black" | "white" | "random"; time: number; increment: number };
+  }>("/create", function handler(req, res) {
+    // bound to fastify server
+    // this.myDecoration.someFunc()
 
-      const { time, color, value } = req.body;
-      let playerColor = color;
-      if (playerColor === "random") {
-        playerColor = Math.random() > 0.5 ? "black" : "white";
-      }
-      const gameKey = Math.random().toString(36).substring(2, 15);
-      const playerId = Math.random().toString(36).substring(2, 15);
+    const { time, color, value, increment } = req.body;
+    let playerColor = color;
+    if (playerColor === "random") {
+      playerColor = Math.random() > 0.5 ? "black" : "white";
+    }
+    const gameKey = Math.random().toString(36).substring(2, 15);
+    const playerId = Math.random().toString(36).substring(2, 15);
 
-      // The WebSocket connection is not open at this point, it opens in /game route
-      WSMap[gameKey] = createGameRoom({ gameKey, playerId, playerColor, value, time });
-      console.log("game created", WSMap[gameKey]);
-      res.status(201).send({
-        gameKey,
-        playerId,
-      });
-    },
-  );
+    // The WebSocket connection is not open at this point, it opens in /game route
+    WSMap[gameKey] = createGameRoom({ gameKey, playerId, playerColor, value, time, increment });
+    console.log("game created", WSMap[gameKey]);
+    res.status(201).send({
+      gameKey,
+      playerId,
+    });
+  });
 
   app.get<{ Params: { gameKey: string } }>(
     "/invite/:gameKey",
@@ -182,6 +181,7 @@ export async function createServer(isProduction: boolean) {
           playerColor: color,
           value,
           time: time.initial,
+          increment: time.increment,
           link: createInviteLink(gameKey, req),
         });
 
@@ -203,7 +203,15 @@ export async function createServer(isProduction: boolean) {
         const invitingPlayer = invitingPlayerEntry[1];
         const acceptingPlayerColor = invitingPlayer.color === "black" ? "white" : "black";
 
-        gameRoom.players[playerId] = { conn: socket, color: acceptingPlayerColor, pick: null };
+        gameRoom.players[playerId] = {
+          conn: socket,
+          color: acceptingPlayerColor,
+          pick: null,
+          timer: new Timer({
+            time: gameRoom.time.initial,
+            increment: gameRoom.time.increment,
+          }),
+        };
         createGameCommands({ gameKey, playerId, socket });
         gameRoom.status = "pick";
 
@@ -212,6 +220,7 @@ export async function createServer(isProduction: boolean) {
           value: gameRoom.value,
           playerColor: acceptingPlayerColor,
           time: gameRoom.time.initial,
+          increment: gameRoom.time.increment,
         });
       }
     },

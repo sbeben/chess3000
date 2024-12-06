@@ -1,9 +1,10 @@
 import { type WebSocket } from "@fastify/websocket";
 import { Chess } from "chess.js";
+import type { GameOverReasons, WsServerDataDict } from "common/ws.js";
 
 import type { GameRoom } from "../types.js";
 import { customToFen } from "../utils/chess.js";
-import { parseTime } from "../utils/time.js";
+import { Timer, parseTime } from "../utils/time.js";
 import { WSMap, parse, send, validate } from "./ws.js";
 
 interface CleanupOptions {
@@ -13,26 +14,48 @@ interface CleanupOptions {
   notifyPlayers?: boolean;
 }
 
+/**
+ * Creates a new game room with the specified parameters.
+ *
+ * @param {string} gameKey - The unique key for the game.
+ * @param {string} playerId - The ID of the player creating the game.
+ * @param {"black" | "white"} playerColor - The color assigned to the player.
+ * @param {number} value - The value associated with the game.
+ * @param {number | null} time - The initial time in seconds , or null if not specified.
+ * @param {number | null} increment - The increment time in seconds, or null if not specified.
+ * @returns {GameRoom} The created game room with initialized settings.
+ */
 export function createGameRoom({
   gameKey,
   playerId,
   playerColor,
   value,
   time,
+  increment,
 }: {
   gameKey: string;
   playerId: string;
   playerColor: "black" | "white";
   value: number;
-  time: string;
+  time: number;
+  increment: number;
 }): GameRoom {
   return {
-    players: { [playerId]: { conn: null, color: playerColor, pick: null } },
+    players: {
+      [playerId]: {
+        conn: null,
+        color: playerColor,
+        pick: null,
+        timer: new Timer({ time: time * 1000, increment: increment * 1000 }),
+      },
+    },
     game: new Chess(),
     value,
     status: "created",
-    turn: "white",
-    time: { white: parseTime(time), black: parseTime(time), initial: parseTime(time) },
+    time: {
+      initial: time * 1000,
+      increment: increment * 1000,
+    },
     isDrawOffered: null,
   };
 }
@@ -43,6 +66,9 @@ export function cleanupGame(gameKey: string) {
     Object.values(gameRoom.players).forEach((player) => {
       if (player.conn) {
         player.conn.close();
+      }
+      if (player.timer) {
+        player.timer.cleanup();
       }
     });
     delete WSMap[gameKey];
@@ -86,9 +112,37 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
         const fen = customToFen({ ...position, ...otherPlayer.pick });
         game.load(fen, { skipValidation: true });
         if (game.isCheck() || game.isCheckmate() || game.isStalemate() || game.isInsufficientMaterial()) {
-          send(otherPlayer!.conn!, "game_over", { result: "draw" });
-          send(player!.conn!, "game_over", { result: "draw" });
+          send(otherPlayer!.conn!, "game_over", { result: "draw", reason: "invalid_pick" });
+          send(player!.conn!, "game_over", { result: "draw", reason: "invalid_pick" });
         } else {
+          if (player.timer) {
+            player.timer.setTimeoutCallback(() => {
+              send(otherPlayer!.conn!, "game_over", {
+                result: player.color === "white" ? "black" : "white",
+                reason: "timeout",
+              });
+              send(player!.conn!, "game_over", {
+                result: player.color === "white" ? "black" : "white",
+                reason: "timeout",
+              });
+              cleanupGame(gameKey);
+            });
+          }
+
+          if (otherPlayer.timer) {
+            otherPlayer.timer.setTimeoutCallback(() => {
+              send(otherPlayer!.conn!, "game_over", {
+                result: otherPlayer.color === "white" ? "black" : "white",
+                reason: "timeout",
+              });
+              send(player!.conn!, "game_over", {
+                result: otherPlayer.color === "white" ? "black" : "white",
+                reason: "timeout",
+              });
+              cleanupGame(gameKey);
+            });
+          }
+
           send(socket, "start", { fen });
           send(otherPlayer!.conn!, "start", { fen });
 
@@ -101,6 +155,7 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
       const { move, timestamp } = validate("move", data);
 
       try {
+        const isFirstMove = game.history().length === 0;
         const correctMove = game.move(move);
 
         if (game.isGameOver()) {
@@ -110,16 +165,34 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
               : "white"
             : "draw";
 
+          const reason: GameOverReasons = game.isCheckmate()
+            ? "checkmate"
+            : game.isInsufficientMaterial()
+              ? "insufficient_material"
+              : game.isStalemate()
+                ? "stalemate"
+                : "threefold_repetition";
+
           send(otherPlayer.conn!, "move", { move: correctMove, timestamp: Date.now() });
-          send(otherPlayer.conn!, "game_over", { result });
-          send(player.conn!, "game_over", { result });
+          send(otherPlayer.conn!, "game_over", { result, reason });
+          send(player.conn!, "game_over", { result, reason });
 
           cleanupGame(gameKey);
         } else {
-          send(otherPlayer!.conn!, "move", {
+          const moveData: WsServerDataDict["move"] = {
             move: correctMove,
-            timestamp: Date.now(),
-          });
+            timestamp: 0,
+          };
+          if (!!player.timer) {
+            if (!isFirstMove) {
+              player.timer.stop({ offset: Date.now() - timestamp });
+            }
+          }
+          if (!!otherPlayer.timer) {
+            otherPlayer.timer.start({ offset: Date.now() - timestamp });
+          }
+          moveData.timestamp = Date.now();
+          send(otherPlayer!.conn!, "move", moveData);
           if (gameRoom.isDrawOffered) {
             gameRoom.isDrawOffered = null;
           }
@@ -146,16 +219,16 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
       const { timestamp } = validate("draw_accept", data);
 
       if (gameRoom.isDrawOffered) {
-        send(otherPlayer.conn!, "game_over", { result: "draw" });
-        send(player.conn!, "game_over", { result: "draw" });
+        send(otherPlayer.conn!, "game_over", { result: "draw", reason: "draw_agreement" });
+        send(player.conn!, "game_over", { result: "draw", reason: "draw_agreement" });
 
         cleanupGame(gameKey);
       }
     } else if (type === "resign") {
       const { color, timestamp } = validate("resign", data);
       const result = color === "white" ? "black" : "white";
-      send(otherPlayer.conn!, "game_over", { result });
-      send(player.conn!, "game_over", { result });
+      send(otherPlayer.conn!, "game_over", { result, reason: "resignation" });
+      send(player.conn!, "game_over", { result, reason: "resignation" });
 
       cleanupGame(gameKey);
     } else {

@@ -8,7 +8,8 @@ type Color = "white" | "black";
 type CreateGameReqDTO = {
   value: number;
   color: CreateGameColor;
-  time: string; //'5:00'
+  time: number;
+  increment: number;
 };
 
 type CreateGameResDTO = {
@@ -19,11 +20,11 @@ type CreateGameResDTO = {
   // value: number;
 };
 
-const createGameFx = createEffect<CreateGameReqDTO, CreateGameResDTO>(async ({ value, color, time }) => {
+const createGameFx = createEffect<CreateGameReqDTO, CreateGameResDTO>(async (data) => {
   return (await backendRequestFx({
     path: "/create",
     method: "POST",
-    data: { value, color, time },
+    data,
   })) as CreateGameResDTO;
 });
 

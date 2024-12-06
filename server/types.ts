@@ -2,16 +2,23 @@ import { type WebSocket } from "@fastify/websocket";
 import type { Chess } from "chess.js";
 import "fastify";
 
+import { Timer } from "./utils/time";
+
 export type GameRoom = {
-  players: { [id: string]: { conn: WebSocket | null; color: "white" | "black"; pick: BoardPosition | null } };
+  players: {
+    [id: string]: {
+      conn: WebSocket | null;
+      color: "white" | "black";
+      pick: BoardPosition | null;
+      timer: Timer;
+    };
+  };
   game: Chess;
   value: number;
   status: "created" | "waiting" | "accepted" | "pick" | "game" | "finished";
-  turn: "white";
   time: {
     initial: number;
-    white: number;
-    black: number;
+    increment: number;
   };
   isDrawOffered: "black" | "white" | null;
 };

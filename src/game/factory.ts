@@ -1,7 +1,7 @@
 import { createFactory } from "@withease/factories";
 import { Chess, type Color, type Move, type Piece, type Square } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample } from "effector";
-import { and, condition, debug, not } from "patronum";
+import { and, condition, debug, interval, not } from "patronum";
 
 export type MoveEvent = { from: Square; to: Square; promotion?: string };
 
@@ -189,9 +189,9 @@ export const createChess = createFactory(() => {
   });
 
   condition({
-    //@ts-expect-error
     source: validMoveSquareClicked,
     if: ({ promotion }) => Boolean(promotion),
+    //@ts-expect-error
     then: $scheduledPromotion,
     else: move,
   });
@@ -344,5 +344,70 @@ export const createChess = createFactory(() => {
     promotionPieceSelected,
     $selectedSquare,
     $validMoves,
+  };
+});
+
+export const createTimer = createFactory(() => {
+  const TICK_DURATION = 100; //ms
+
+  const $timer = createStore(0);
+  const $increment = createStore(0);
+  const start = createEvent<{ offset: number }>();
+  const stop = createEvent<{ offset: number }>();
+
+  const $startTime = createStore(0);
+
+  const timeout = createEvent();
+
+  const startTimer = createEvent();
+  const stopTimer = createEvent();
+
+  const { tick } = interval({
+    timeout: TICK_DURATION,
+    start: startTimer,
+    stop: stopTimer,
+  });
+
+  sample({
+    clock: tick,
+    source: $timer,
+    fn: (time) => time - TICK_DURATION,
+    target: $timer,
+  });
+
+  sample({
+    clock: startTimer,
+    fn: () => Date.now(),
+    target: $startTime,
+  });
+
+  sample({
+    clock: start,
+    source: $timer,
+    fn: (time, { offset }) => time + offset,
+    target: [$timer, startTimer],
+  });
+
+  sample({
+    clock: stop,
+    source: { timer: $timer, startTime: $startTime, increment: $increment },
+    fn: ({ timer, startTime, increment }, { offset }) =>
+      timer - startTime > increment ? timer + offset : timer + offset + increment,
+    target: [$timer, stopTimer, $startTime.reinit],
+  });
+
+  sample({
+    clock: $timer.updates,
+    filter: (time) => time <= 0,
+    fn: () => 0,
+    target: [$timer, stopTimer, timeout],
+  });
+
+  return {
+    $timer,
+    $increment,
+    start,
+    stop,
+    timeout,
   };
 });

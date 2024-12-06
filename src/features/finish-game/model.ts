@@ -2,7 +2,7 @@ import { invoke } from "@withease/factories";
 import type { WsServerDataDict } from "common/ws";
 import { createEvent, createStore, sample } from "effector";
 import { condition, not, or, spread } from "patronum";
-import { $$state, $color, $status } from "~/game/model";
+import { $$state, $color, $status, time } from "~/game/model";
 import { $$setableStore, $$toggle } from "~/shared/utils/effector";
 import { createMessage, messageReceived, sendMessage } from "~/shared/ws";
 
@@ -87,11 +87,12 @@ sample({
   filter: ({ type }) => type === "game_over",
   fn: ({ data }) => {
     const { result } = data as WsServerDataDict["game_over"];
-    return { status: "finished" as const, isOver: true, result };
+    return { status: "finished" as const, isOver: true, result, timers: { offset: 0 } };
   },
   target: spread({
     status: $status,
     result: $$state.$result,
     isOver: $$state.$isOver,
+    timers: [time.black.stop, time.white.stop],
   }),
 });

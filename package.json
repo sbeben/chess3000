@@ -39,7 +39,7 @@
     "effector-react": "23.2.1",
     "effector-storage": "7.1.0",
     "fastify": "4.28.1",
-    "patronum": "2.2.0",
+    "patronum": "2.3.0",
     "pino": "9.3.2",
     "react": "18.3.1",
     "react-chessboard": "4.7.1",

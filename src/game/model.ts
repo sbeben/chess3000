@@ -4,7 +4,7 @@ import { createEvent, createStore, restore, sample } from "effector";
 import { and, condition, debug, equals, not, or } from "patronum";
 import type { BoardPosition, Piece, Square } from "~/types/game";
 
-import { createChess } from "./factory";
+import { createChess, createTimer } from "./factory";
 
 type PieceDrop = { piece: Piece; from: Square; to: Square };
 
@@ -28,7 +28,7 @@ export const FEN = {
 export const $inviteLink = createStore<string | null>("https://chaotenschach.com/");
 
 //create stores
-export const $time = createStore<number | null>(null);
+// export const $time = createStore<number | null>(null);
 
 //pick events
 export const sparePieceDropped = createEvent<{ piece: Piece; square: Square }>();
@@ -65,12 +65,12 @@ export const $color = createStore<"black" | "white" | null>(null);
 export const switchOrientation = createEvent();
 export const $boardOrientation = createStore<"white" | "black">("white");
 
-const $whiteTime = createStore<number | null>(null);
-const $blackTime = createStore<number | null>(null);
+const $$whiteTime = invoke(createTimer);
+const $$blackTime = invoke(createTimer);
 
 export const time = {
-  $white: $whiteTime,
-  $black: $blackTime,
+  white: $$whiteTime,
+  black: $$blackTime,
 };
 
 export const $key = createStore<string | null>(null);

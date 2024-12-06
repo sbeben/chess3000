@@ -34,14 +34,15 @@ sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "created",
   fn: ({ type, data }) => {
-    const { playerColor, value, time, link } = data as WsServerDataDict["created"];
-    return { type: "created" as const, playerColor, value, time, link, orientation: playerColor };
+    const { playerColor, value, time, link, increment } = data as WsServerDataDict["created"];
+    return { type: "created" as const, playerColor, value, time, increment, link, orientation: playerColor };
   },
   target: spread({
     type: Game.$status,
     playerColor: Game.$color,
     value: Game.$value,
-    time: Game.$time,
+    time: [Game.time.black.$timer, Game.time.white.$timer],
+    increment: [Game.time.black.$increment, Game.time.white.$increment],
     link: Game.$inviteLink,
     orientation: Game.$boardOrientation,
   }),
@@ -59,14 +60,15 @@ sample({
   clock: WsApi.messageReceived,
   filter: ({ type }) => type === "joined",
   fn: ({ type, data }) => {
-    const { playerColor, value, time } = data as WsServerDataDict["joined"];
-    return { type: "pick" as const, playerColor, value, time, orientation: playerColor };
+    const { playerColor, value, time, increment } = data as WsServerDataDict["joined"];
+    return { type: "pick" as const, playerColor, value, time, increment, orientation: playerColor };
   },
   target: spread({
     type: Game.$status,
     playerColor: Game.$color,
     value: Game.$value,
-    time: Game.$time,
+    time: [Game.time.black.$timer, Game.time.white.$timer],
+    increment: [Game.time.black.$increment, Game.time.white.$increment],
     orientation: Game.$boardOrientation,
     // link: Game.$inviteLink,
   }),

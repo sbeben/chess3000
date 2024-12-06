@@ -3,6 +3,7 @@ import { useUnit } from "effector-react";
 import { resign as resignEvent } from "~/features/finish-game/model";
 import { colors } from "~/shared/ui/colors";
 import { Heading } from "~/shared/ui/components/Heading";
+import { formatTimer } from "~/shared/utils/format";
 
 import { DrawButton } from "./DrawButton";
 import { ResignButton } from "./ResignButton";
@@ -11,8 +12,8 @@ import { SwitchOrientationButton } from "./SwitchOrientationButton";
 export const GamePanel = () => {
   const { whiteTime, blackTime, orientation, currentMove, totalMoves, notation, backward, forward, color, turn } =
     useUnit({
-      whiteTime: Game.time.$white,
-      blackTime: Game.time.$black,
+      whiteTime: Game.time.white.$timer,
+      blackTime: Game.time.black.$timer,
       currentMove: Game.$currentMove,
       totalMoves: Game.$totalMoves,
       notation: Game.$notation,
@@ -71,7 +72,7 @@ export const GamePanel = () => {
             </div>
           )}
 
-          <div>{color === "white" ? (blackTime ?? "5:00") : (whiteTime ?? "5:00")}</div>
+          <div>{color === "white" ? (formatTimer(blackTime) ?? "5:00") : (formatTimer(whiteTime) ?? "5:00")}</div>
         </div>
       </div>
 
@@ -151,7 +152,7 @@ export const GamePanel = () => {
               ♟️
             </div>
           )}
-          <div>{color === "white" ? (whiteTime ?? "5:00") : (blackTime ?? "5:00")}</div>
+          <div>{color === "white" ? (formatTimer(whiteTime) ?? "5:00") : (formatTimer(blackTime) ?? "5:00")}</div>
         </div>
       </div>
       {/* <div style={{ marginTop: "8px", fontFamily: "monospace" }}>{notation}</div> */}
