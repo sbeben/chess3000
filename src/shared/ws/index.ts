@@ -2,7 +2,11 @@ import type { Move } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample, scopeBind } from "effector";
 import type { BoardPosition } from "~/types/game";
 
-import { WS_CLIENT_COMMANDS_SCHEMA_DICT, type WsClientDataDict, type WsServerDataDict } from "../../../common/ws";
+import {
+  WS_CLIENT_COMMANDS_SCHEMA_DICT,
+  type WsClientDataDict,
+  type WsServerDataDict,
+} from "../../../common/contracts";
 import { getWebSocketUrl } from "../utils/url";
 
 type WsServerEventType = keyof WsServerDataDict;

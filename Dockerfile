@@ -58,6 +58,6 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 4000
 
 # Start the server directly without cross-env since we're setting NODE_ENV in the container
-CMD ["node", "./dist/cli/index"]
+CMD ["node", "./dist/cli/server/index"]
 
 

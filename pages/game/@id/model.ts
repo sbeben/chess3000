@@ -5,7 +5,7 @@ import { createStore, sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
 
-import { type WsServerDataDict } from "../../../common/ws";
+import { type WsServerDataDict } from "../../../common/contracts";
 import { pageStarted } from "./+pageStarted";
 
 export const gate = createGate();

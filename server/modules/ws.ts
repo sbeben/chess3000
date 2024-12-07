@@ -2,7 +2,11 @@ import { type WebSocket } from "@fastify/websocket";
 import type { WSMapType } from "server/types";
 import z from "zod";
 
-import { WS_CLIENT_COMMANDS_SCHEMA_DICT, type WsClientDataDict, type WsServerDataDict } from "../../common/ws.js";
+import {
+  WS_CLIENT_COMMANDS_SCHEMA_DICT,
+  type WsClientDataDict,
+  type WsServerDataDict,
+} from "../../common/contracts.js";
 
 export const WSMap: WSMapType = {};
 

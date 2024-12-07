@@ -1,7 +1,7 @@
 import { type WebSocket } from "@fastify/websocket";
 import { Chess } from "chess.js";
-import type { GameOverReasons, WsServerDataDict } from "common/ws.js";
 
+import type { GameOverReasons, WsServerDataDict } from "../../common/contracts.js";
 import type { GameRoom } from "../types.js";
 import { customToFen } from "../utils/chess.js";
 import { Timer, parseTime } from "../utils/time.js";
