@@ -1,161 +1,146 @@
-import * as Game from "~/game/model";
 import { useUnit } from "effector-react";
 import { resign as resignEvent } from "~/features/finish-game/model";
+import { ConfirmPickButton } from "~/features/pick-pieces/ConfirmPickButton";
+import { PickPieces } from "~/features/pick-pieces/PickPieces";
+import { ValueInfo } from "~/features/pick-pieces/ValueInfo";
+import { $$state, $boardOrientation, $color, $isKingOnBoard, $status, $value, time } from "~/game/model";
 import { colors } from "~/shared/ui/colors";
 import { Heading } from "~/shared/ui/components/Heading";
 import { formatTimer } from "~/shared/utils/format";
+import { useBreakpoint } from "~/shared/utils/useBreakpoints";
 
 import { DrawButton } from "./DrawButton";
 import { ResignButton } from "./ResignButton";
 import { SwitchOrientationButton } from "./SwitchOrientationButton";
 
-export const GamePanel = () => {
-  const { whiteTime, blackTime, orientation, currentMove, totalMoves, notation, backward, forward, color, turn } =
-    useUnit({
-      whiteTime: Game.time.white.$timer,
-      blackTime: Game.time.black.$timer,
-      currentMove: Game.$currentMove,
-      totalMoves: Game.$totalMoves,
-      notation: Game.$notation,
-      orientation: Game.$boardOrientation,
-      resign: resignEvent,
-      offerDraw: Game.$$state.offerDraw,
-      backward: Game.backward,
-      forward: Game.forward,
-      color: Game.$color,
-      turn: Game.$$state.$turn,
-    });
-
+const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: boolean }) => {
+  const { color, turn, whiteTime, blackTime, status } = useUnit({
+    color: $color,
+    turn: $$state.$turn,
+    whiteTime: time.white.$timer,
+    blackTime: time.black.$timer,
+    status: $status,
+  });
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection:
-          (orientation === "white" && color === "white") || (orientation === "black" && color === "black")
-            ? "column"
-            : "column-reverse",
-        width: "100%",
-        maxWidth: "400px",
-        minWidth: "300px",
-        maxHeight: "400px",
-        height: "100%",
-        backgroundColor: colors.white.DEFAULT,
-        border: `1px solid ${colors.gray.DEFAULT}`,
-        borderRadius: "4px",
-      }}
+      className={`
+      bg-gray flex justify-between items-center px-2 py-2 md:py-4 w-full max-w-[600px]
+        ${isMobile && isOpponent ? "rounded-t" : ""}
+        ${isMobile && !isOpponent ? "rounded-b" : ""}
+      `}
     >
-      <div
-        style={{
-          background: colors.gray.DEFAULT,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "8px",
-          height: "40px",
-          width: "100%",
-        }}
-      >
-        <Heading variant="h4">{`Opponent ${color === "white" ? "(black)" : "(white)"}`}</Heading>
-        <div style={{ display: "flex", gap: "4px", height: "100%", justifyContent: "flex-end", alignItems: "center" }}>
-          {!!color && turn !== color[0] && (
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              ♟️
+      {status === "pick" ? (
+        <>
+          <ValueInfo />
+          {isMobile && <ConfirmPickButton className="max-w-[100px]" />}
+        </>
+      ) : (
+        <>
+          <Heading variant="h4">
+            {isOpponent ? `Opponent ${color === "white" ? "(black)" : "(white)"}` : `You (${color})`}
+          </Heading>
+          <div className="flex gap-1 h-full justify-end items-center">
+            {!!color && turn === (isOpponent ? (color === "white" ? "b" : "w") : color[0]) && (
+              <div
+                className="w-5 h-5 flex justify-center items-center"
+                style={{
+                  background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
+                }}
+              >
+                ♟️
+              </div>
+            )}
+            <div>
+              {isOpponent
+                ? color === "white"
+                  ? (formatTimer(blackTime) ?? "5:00")
+                  : (formatTimer(whiteTime) ?? "5:00")
+                : color === "white"
+                  ? (formatTimer(whiteTime) ?? "5:00")
+                  : (formatTimer(blackTime) ?? "5:00")}
             </div>
-          )}
-
-          <div>{color === "white" ? (formatTimer(blackTime) ?? "5:00") : (formatTimer(whiteTime) ?? "5:00")}</div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+const ControlPanel = ({ boardWidth }: { boardWidth: number }) => {
+  const { status, color, value, isKingOnBoard } = useUnit({
+    status: $status,
+    color: $color,
+    value: $value,
+    isKingOnBoard: $isKingOnBoard,
+  });
+  return (
+    <div className="flex gap-1 w-full h-full justify-center items-center p-2">
+      {status === "pick" && (
+        <div className="flex flex-row lg:flex-col gap-2">
+          <PickPieces
+            color={color ?? "white"}
+            value={value ?? 25}
+            isKingActive={!isKingOnBoard}
+            boardWidth={boardWidth}
+          />
         </div>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          width: "100%",
-          height: "100%",
-          maxHeight: "400px",
-        }}
-      >
-        <div style={{ display: "flex", gap: "4px", width: "100%", justifyContent: "center" }}>
+      )}
+      {status === "game" && (
+        <>
           <SwitchOrientationButton />
           <DrawButton />
           <ResignButton />
+        </>
+      )}
+    </div>
+  );
+};
+export const GamePanel = ({ children, boardWidth }: { children: React.ReactNode; boardWidth: number }) => {
+  const { orientation, color, status } = useUnit({
+    orientation: $boardOrientation,
+    color: $color,
+    status: $status,
+  });
+
+  const isDesktop = useBreakpoint("lg");
+
+  return (
+    <div className="flex flex-col lg:justify-center items-center lg:flex-row w-full h-full max-h-[600px] lg:gap-4">
+      {/* Mobile: Top timer panel */}
+      {!isDesktop && status !== "created" && (
+        <div className="w-full flex justify-center">
+          <TimerPanel isOpponent={true} isMobile={true} />
         </div>
-        {/* <button
-          onClick={backward}
-          disabled={currentMove === 0}
-          style={{
-            padding: "8px",
-            background: "white",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-            opacity: currentMove === 0 ? 0.5 : 1,
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 6H2V18H6V6ZM7 18L17 12L7 6V18Z" fill="currentColor" />
-          </svg>
-        </button>
-        <button
-          onClick={forward}
-          disabled={currentMove === totalMoves}
-          style={{
-            padding: "8px",
-            background: "white",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-            opacity: currentMove === totalMoves ? 0.5 : 1,
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 18H22V6H18V18ZM17 6L7 12L17 18V6Z" fill="currentColor" />
-          </svg>
-        </button> */}
-      </div>
-      <div
-        style={{
-          background: colors.gray.DEFAULT,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "8px",
-          height: "40px",
-          width: "100%",
-        }}
-      >
-        <Heading variant="h4">{`You (${color})`}</Heading>
-        <div style={{ display: "flex", gap: "4px", height: "100%", justifyContent: "flex-end", alignItems: "center" }}>
-          {!!color && turn === color[0] && (
-            <div
-              style={{
-                width: "20px",
-                height: "20px",
-                background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              ♟️
-            </div>
-          )}
-          <div>{color === "white" ? (formatTimer(whiteTime) ?? "5:00") : (formatTimer(blackTime) ?? "5:00")}</div>
+      )}
+
+      {/* Board */}
+      <div className="w-full lg:w-auto">{children}</div>
+
+      {/* Mobile: Bottom panels */}
+      {!isDesktop && status !== "created" && (
+        <div className="w-full flex flex-col items-center">
+          {(status === "game" || status === "finished") && <TimerPanel isOpponent={false} isMobile={true} />}
+          <ControlPanel boardWidth={boardWidth} />
         </div>
-      </div>
-      {/* <div style={{ marginTop: "8px", fontFamily: "monospace" }}>{notation}</div> */}
+      )}
+
+      {/* Desktop: Side panel */}
+      {isDesktop && status !== "created" && (
+        <div className="flex flex-col h-full w-[300px] bg-white border border-gray rounded">
+          <div
+            className={`flex flex-col h-full ${
+              (orientation === "white" && color === "white") || (orientation === "black" && color === "black")
+                ? ""
+                : "flex-col-reverse"
+            }`}
+          >
+            <TimerPanel isOpponent={true} />
+
+            <ControlPanel boardWidth={boardWidth} />
+
+            {status === "pick" ? <ConfirmPickButton /> : <TimerPanel isOpponent={false} />}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

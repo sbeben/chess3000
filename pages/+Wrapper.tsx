@@ -5,69 +5,30 @@ import { Provider, useUnit } from "effector-react";
 import { usePageContext } from "vike-react/usePageContext";
 import { clientNavigate } from "~/shared/routing";
 import { colors } from "~/shared/ui/colors";
-import { Heading } from "~/shared/ui/components/Heading";
 
-import "./globals.css";
+import "./index.css";
 
 export default function WrapperEffector({ children }: { children: React.ReactNode }) {
   const { scopeValues } = usePageContext();
   const goTo = useUnit(clientNavigate);
   return (
     <Provider value={fork({ values: scopeValues })}>
-      <div
-        style={{
-          position: "fixed",
-          width: "100dvw",
-          height: "100dvh",
-          background: colors.white.DEFAULT,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            height: "100%",
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column",
-          }}
-        >
-          <div style={{ maxHeight: "56px", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <div className="fixed w-screen h-screen overflow-hidden bg-white">
+        <div className="relative h-full w-full flex justify-center items-center flex-col">
+          <div className="max-h-[56px] flex justify-center items-center">
             <div
+              className="mt-[-48px] w-[200px] h-[200px] flex justify-center items-center"
               style={{
-                marginTop: "-48px",
-                width: "200px",
-                height: "200px",
                 background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
               }}
             >
-              <Heading
-                onClick={() => goTo("/")}
-                style={{
-                  cursor: "pointer",
-                  marginTop: "48px",
-                }}
-              >
+              <h1 className="text-xxl font-bold mt-[48px] cursor-pointer" onClick={() => goTo("/")}>
                 chess3000
-              </Heading>
+              </h1>
             </div>
           </div>
-          {/* <div
-          style={{
-            position: "absolute",
-            top: "-112px",
-            left: "50%",
-            transform: "translateX(-50%)",
-          }}
-        >
-         
-        </div> */}
-          <div style={{ height: "100%", width: "100%", overflowY: "scroll" }}>{children}</div>
+
+          <div className="h-full w-full overflow-y-scroll">{children}</div>
         </div>
       </div>
     </Provider>

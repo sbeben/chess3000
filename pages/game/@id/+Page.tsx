@@ -102,21 +102,31 @@ export function Page() {
   const getSquareStyles = (): CustomSquareStyles => {
     const styles: CustomSquareStyles = {};
 
-    // for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
-    //   for (let rank = 1; rank <= 8; rank++) {
-    //     const square = `${String.fromCharCode(file)}${rank}`;
-    //     styles[square] = {
-    //       backgroundColor: isLightSquare(square) ? colors.white.DEFAULT : colors.blue.DEFAULT,
-    //     };
-    //   }
-    // }
+    // Set base colors first
+    for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
+      for (let rank = 1; rank <= 8; rank++) {
+        const square = `${String.fromCharCode(file)}${rank}`;
+        const baseColor = isLightSquare(square) ? colors.white.DEFAULT : colors.blue.DEFAULT;
+        styles[square] = {
+          background: baseColor, // Changed from backgroundColor to background
+        };
+      }
+    }
 
     if (selectedSquare) {
-      styles[selectedSquare] = squareStyles.selectedSquare;
+      styles[selectedSquare] = {
+        ...styles[selectedSquare],
+        background: colors.green_yellow.DEFAULT,
+      };
 
       validMoves.forEach((move) => {
+        const baseColor = isLightSquare(move.to) ? colors.white.DEFAULT : colors.blue.DEFAULT;
         styles[move.to] = {
-          ...(game.get(move.to) ? squareStyles.captureMove : squareStyles.validMove),
+          ...styles[move.to],
+          background: game.get(move.to)
+            ? `radial-gradient(circle, rgba(255,0,0,.1) 25%, transparent 25%), ${baseColor}`
+            : `radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%), ${baseColor}`,
+          cursor: "pointer",
         };
       });
     }
@@ -128,8 +138,8 @@ export function Page() {
         .find((square) => square?.type === "k" && square.color === game.turn())?.square;
       if (kingSquare) {
         styles[kingSquare] = {
-          ...squareStyles.checkedKing,
-          ...(styles[kingSquare] || {}),
+          ...styles[kingSquare],
+          background: colors.red.DEFAULT,
         };
       }
     }
@@ -145,96 +155,55 @@ export function Page() {
   };
 
   return (
-    <div
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        paddingTop: "40px",
-        justifyContent: "flex-start",
-        alignItems: "center",
-        flexDirection: "column",
-      }}
-    >
+    <div className="h-full w-full pt-2 md:pt-8 lg:pt-10 ">
       <DnDProvider>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: windowWidth <= 768 ? "flex-start" : "center",
-            flexDirection: windowWidth <= 768 ? "column" : "row",
-            gap: "16px",
-            maxWidth: "864px",
-            width: "100%",
-          }}
-        >
-          <div
-            style={{
-              position: "relative",
-              height: "fit-content",
-              width: "fit-content",
-              maxWidth: "100%",
-            }}
-          >
-            <Board
-              id="ManualBoardEditor"
-              position={["created", "pick"].includes(status) ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)}
-              onPieceDrop={(from, to, piece) => {
-                pieceDrop({ from, to, piece });
-                return true;
-              }}
-              isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color![0]}
-              //@ts-expect-error
-              onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
-              onPromotionPieceSelect={(pr, from, to) => {
-                //@ts-expect-error
-                promotionSelect(pr || null);
-                return true;
-              }}
-              boardWidth={calculateBoardWidth()}
-              showPromotionDialog={showPromotionDialog}
-              promotionToSquare={!!scheduledPromotion ? scheduledPromotion.to || undefined : undefined}
-              boardOrientation={orientation}
-              showBoardNotation={true}
-              dropOffBoardAction={status === "pick" ? "trash" : "snapback"}
-              onSparePieceDrop={(piece, square) => {
-                let canDrop = true;
-                if (
-                  (piece[1] === "K" && isKingOnBoard) ||
-                  ((color ?? "white") === "white" && !["1", "2", "3", "4"].includes(square[1]!)) ||
-                  ((color ?? "white") === "black" && !["5", "6", "7", "8"].includes(square[1]!))
-                ) {
-                  canDrop = false;
+        <GamePanel boardWidth={calculateBoardWidth()}>
+          <div className="flex items-center justify-center md:justify-center flex-col md:flex-row gap-4 w-full">
+            <div className="relative h-fit w-fit max-w-full">
+              <Board
+                id="ManualBoardEditor"
+                position={
+                  ["created", "pick"].includes(status) ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)
                 }
-                if (canDrop) sparePieceDrop({ piece, square });
-                return canDrop;
-              }}
-              onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
-              customSquareStyles={getSquareStyles()}
-              customNotationStyle={{ color: colors.red.DEFAULT }}
-            />
-            {status === "pick" && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "50%",
-                  backgroundColor: "rgba(0, 0, 0, 0.6)",
+                onPieceDrop={(from, to, piece) => {
+                  pieceDrop({ from, to, piece });
+                  return true;
                 }}
+                isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color![0]}
+                //@ts-expect-error
+                onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
+                onPromotionPieceSelect={(pr, from, to) => {
+                  //@ts-expect-error
+                  promotionSelect(pr || null);
+                  return true;
+                }}
+                boardWidth={calculateBoardWidth()}
+                showPromotionDialog={showPromotionDialog}
+                promotionToSquare={!!scheduledPromotion ? scheduledPromotion.to || undefined : undefined}
+                boardOrientation={orientation}
+                showBoardNotation={true}
+                dropOffBoardAction={status === "pick" ? "trash" : "snapback"}
+                onSparePieceDrop={(piece, square) => {
+                  let canDrop = true;
+                  if (
+                    (piece[1] === "K" && isKingOnBoard) ||
+                    ((color ?? "white") === "white" && !["1", "2", "3", "4"].includes(square[1]!)) ||
+                    ((color ?? "white") === "black" && !["5", "6", "7", "8"].includes(square[1]!))
+                  ) {
+                    canDrop = false;
+                  }
+                  if (canDrop) sparePieceDrop({ piece, square });
+                  return canDrop;
+                }}
+                onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
+                customSquareStyles={getSquareStyles()}
+                customNotationStyle={{ color: colors.red.DEFAULT }}
               />
-            )}
+              {status === "pick" && <div className="absolute top-0 left-0 w-full h-1/2 bg-gray opacity-70" />}
+            </div>
           </div>
-          <div style={{ width: windowWidth <= 768 ? "100%" : "auto" }}>
-            {status === "pick" && (
-              <PickPieces color={color ?? "white"} value={value ?? 25} isKingActive={!isKingOnBoard} />
-            )}
-            {status === "game" && <GamePanel />}
-          </div>
-        </div>
+        </GamePanel>
       </DnDProvider>
-
       {status === "created" && <SendInviteDialog />}
       {status === "finished" && <EndgameDialog />}
     </div>

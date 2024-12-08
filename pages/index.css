@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: "Be Vietnam Pro", sans-serif;
+  }
+
+  label,
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Unbounded", sans-serif;
+  }
+}
+
+/* Handle range input styling */
+input[type="range"]::-webkit-slider-thumb {
+  @apply bg-blue cursor-pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply bg-blue cursor-pointer;
+}
+
+input[type="range"]::-ms-thumb {
+  @apply bg-blue cursor-pointer;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

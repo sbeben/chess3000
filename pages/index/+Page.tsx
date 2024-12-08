@@ -3,16 +3,9 @@ import { Heading } from "~/shared/ui/components/Heading";
 
 export default function PageHome() {
   return (
-    <div
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      <div style={{ marginTop: "40px", display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
-        <Heading variant="h3">Invite your friend to play</Heading>
+    <div className="h-full w-full flex justify-center">
+      <div className="mt-10 flex flex-col gap-2.5 items-center">
+        <h3 className="font-semibold">Invite your friend to play</h3>
         <CreateGameForm />
       </div>
     </div>

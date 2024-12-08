@@ -54,7 +54,7 @@ export async function createServer(isProduction: boolean) {
     // In production, we need to serve our static assets ourselves.
     // (In dev, Vite's middleware serves our static assets.)
     await app.register(import("@fastify/static"), {
-      root: path.join(directoryRoot, "client", "assets"),
+      root: path.join(`${directoryRoot}/..`, "client", "assets"),
       prefix: "/assets/",
     });
 

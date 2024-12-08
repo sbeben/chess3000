@@ -25,7 +25,7 @@ export const FEN = {
 };
 
 //invite stores
-export const $inviteLink = createStore<string | null>("https://chaotenschach.com/");
+export const $inviteLink = createStore<string | null>(null);
 
 //create stores
 // export const $time = createStore<number | null>(null);
