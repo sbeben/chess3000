@@ -86,6 +86,9 @@ importers:
       postcss:
         specifier: ^8.4.49
         version: 8.4.49
+      rdndmb-html5-to-touch:
+        specifier: ^8.0.3
+        version: 8.0.3(dnd-core@16.0.1)
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -95,6 +98,9 @@ importers:
       react-dnd-html5-backend:
         specifier: 16.0.1
         version: 16.0.1
+      react-dnd-multi-backend:
+        specifier: ^8.0.3
+        version: 8.0.3(dnd-core@16.0.1)(react-dnd@16.0.1(@types/node@22.5.0)(@types/react@18.3.3)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
@@ -1235,6 +1241,11 @@ packages:
   dnd-core@16.0.1:
     resolution: {integrity: sha512-HK294sl7tbw6F6IeuK16YSBUoorvHpY8RHO+9yFfaJyCDVb6n7PRcezrOEOa2SBCqiYpemh5Jx20ZcjKdFAVng==}
 
+  dnd-multi-backend@8.0.3:
+    resolution: {integrity: sha512-yFFARotr+OEJk787Fsj+V52pi6j7+Pt/CRp3IR2Ai3fnxA/z6J54T7+gxkXzXu4cvxTNE7NiBzzAaJ2f7JjFTw==}
+    peerDependencies:
+      dnd-core: ^16.0.1
+
   dot-case@3.0.4:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
 
@@ -1809,6 +1820,9 @@ packages:
   quick-format-unescaped@4.0.4:
     resolution: {integrity: sha512-tYC1Q1hgyRuHgloV/YXs2w15unPVh8qfu/qCTfhTYamaw7fyhumKa2yGpdSo87vY32rIclj+4fWYQXUMs9EHvg==}
 
+  rdndmb-html5-to-touch@8.0.3:
+    resolution: {integrity: sha512-VfIbLjlL9NAnZzc2M5fGPCNkDyK12+ahgILGO5RjS7jkgUlxwB0c/XvxVQNfY/2ocg7isTY/G7tqxJk5fSTZAA==}
+
   react-chessboard@4.7.1:
     resolution: {integrity: sha512-WP5hO9RWNnk6NiuSymqBub8+3BUYvUmUkqN7KiZjNFQLOOJ36bVjzeDGc9vxbS5DepF3SGNixyGz47Em0NgFgA==}
     peerDependencies:
@@ -1817,6 +1831,20 @@ packages:
 
   react-dnd-html5-backend@16.0.1:
     resolution: {integrity: sha512-Wu3dw5aDJmOGw8WjH1I1/yTH+vlXEL4vmjk5p+MHxP8HuHJS1lAGeIdG/hze1AvNeXWo/JgULV87LyQOr+r5jw==}
+
+  react-dnd-multi-backend@8.0.3:
+    resolution: {integrity: sha512-IwH7Mf6R05KIFohX0hHMTluoAvuUD8SO15KCD+9fY0nJ4nc1FGCMCSyMZw8R1XNStKp+JnNg3ZMtiaf5DebSUg==}
+    peerDependencies:
+      dnd-core: ^16.0.1
+      react: ^16.14.0 || ^17.0.2 || ^18.0.0
+      react-dnd: ^16.0.1
+      react-dom: ^16.14.0 || ^17.0.2 || ^18.0.0
+
+  react-dnd-preview@8.0.3:
+    resolution: {integrity: sha512-s69Ro47QYDthDhj73iQ0VioMCjtlZ1AytKBDkQaHKm5DTjA8D2bIaFKCBQd330QEW0SIzqLJrZGCSlIY2xraJg==}
+    peerDependencies:
+      react: ^16.14.0 || ^17.0.2 || ^18.0.0
+      react-dnd: ^16.0.1
 
   react-dnd-touch-backend@16.0.1:
     resolution: {integrity: sha512-NonoCABzzjyWGZuDxSG77dbgMZ2Wad7eQiCd/ECtsR2/NBLTjGksPUx9UPezZ1nQ/L7iD130Tz3RUshL/ClKLA==}
@@ -3184,6 +3212,10 @@ snapshots:
       '@react-dnd/invariant': 4.0.2
       redux: 4.2.1
 
+  dnd-multi-backend@8.0.3(dnd-core@16.0.1):
+    dependencies:
+      dnd-core: 16.0.1
+
   dot-case@3.0.4:
     dependencies:
       no-case: 3.0.4
@@ -3757,6 +3789,14 @@ snapshots:
 
   quick-format-unescaped@4.0.4: {}
 
+  rdndmb-html5-to-touch@8.0.3(dnd-core@16.0.1):
+    dependencies:
+      dnd-multi-backend: 8.0.3(dnd-core@16.0.1)
+      react-dnd-html5-backend: 16.0.1
+      react-dnd-touch-backend: 16.0.1
+    transitivePeerDependencies:
+      - dnd-core
+
   react-chessboard@4.7.1(@types/node@22.5.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
@@ -3772,6 +3812,20 @@ snapshots:
   react-dnd-html5-backend@16.0.1:
     dependencies:
       dnd-core: 16.0.1
+
+  react-dnd-multi-backend@8.0.3(dnd-core@16.0.1)(react-dnd@16.0.1(@types/node@22.5.0)(@types/react@18.3.3)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      dnd-core: 16.0.1
+      dnd-multi-backend: 8.0.3(dnd-core@16.0.1)
+      react: 18.3.1
+      react-dnd: 16.0.1(@types/node@22.5.0)(@types/react@18.3.3)(react@18.3.1)
+      react-dnd-preview: 8.0.3(react-dnd@16.0.1(@types/node@22.5.0)(@types/react@18.3.3)(react@18.3.1))(react@18.3.1)
+      react-dom: 18.3.1(react@18.3.1)
+
+  react-dnd-preview@8.0.3(react-dnd@16.0.1(@types/node@22.5.0)(@types/react@18.3.3)(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-dnd: 16.0.1(@types/node@22.5.0)(@types/react@18.3.3)(react@18.3.1)
 
   react-dnd-touch-backend@16.0.1:
     dependencies:

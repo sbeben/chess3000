@@ -7,7 +7,7 @@ import {
   type WsClientDataDict,
   type WsServerDataDict,
 } from "../../../common/contracts";
-import { getWebSocketUrl } from "../utils/url";
+import { getUrl, getWebSocketUrl } from "../utils/url";
 
 type WsServerEventType = keyof WsServerDataDict;
 type WsClientEventType = keyof WsClientDataDict;
@@ -68,7 +68,7 @@ export const initWebsocketFx = createEffect<{ data: { gameKey: string; playerId:
   async ({ data }) => {
     //   if (!token) throw new Error("No token");
     //   const protocol = ["access_token", token];
-    const link = `${getWebSocketUrl(import.meta.env.PUBLIC_ENV__HOST || "http://0.0.0.0:4000")}connect/${data.gameKey}/${data.playerId}`;
+    const link = `${getWebSocketUrl(getUrl())}connect/${data.gameKey}/${data.playerId}`;
     const socket = new WebSocket(link);
     let loaded = false;
     socket.addEventListener(

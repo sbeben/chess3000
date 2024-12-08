@@ -1,15 +1,32 @@
 import "dotenv/config";
+import { networkInterfaces } from "os";
 
 import { CONFIG } from "./config.js";
 import { createServer } from "./server.js";
 
 const isProduction = CONFIG.NODE_ENV === "production";
 const app = await createServer(isProduction);
+function getLocalIP() {
+  const nets = networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] ?? []) {
+      // Skip internal and non-IPv4 addresses
+      if (!net.internal && net.family === "IPv4") {
+        return net.address;
+      }
+    }
+  }
+  return null;
+}
+const localIP = getLocalIP();
+
 console.log("Server routes:\r\n", app.printRoutes());
 
 const listenHost = await app.listen({ host: "0.0.0.0", port: CONFIG.SERVER_PORT });
 console.info(`Server listening at ${listenHost}`);
-
+if (localIP) {
+  console.info(`Access from mobile at http://${localIP}:${CONFIG.SERVER_PORT}`);
+}
 // Listen to typical SIGINT and SIGTERM signals
 // so that we can gracefully close the server
 // and enable rolling update strategy.

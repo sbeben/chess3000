@@ -1,5 +1,7 @@
 import { attach, createEffect, createStore, sample } from "effector";
 
+import { getUrl } from "../utils/url";
+
 export const $token = createStore<string | null>(null);
 
 export type FilesData = { files?: File[] };
@@ -80,7 +82,7 @@ export const requestFx = createEffect<BaseRequest, unknown, ErrorRes>(
       // @ts-expect-error wtf
       fetchSettings.headers["Content-Type"] = "application/json";
     }
-    const baseUrl = url || import.meta.env.PUBLIC_ENV__HOST || "http://0.0.0.0:4000";
+    const baseUrl = url || getUrl();
     const res = await fetch(`${baseUrl}${path}${queryToString(query)}`, fetchSettings);
     if (stream) {
       let chunks = "";

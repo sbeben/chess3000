@@ -155,7 +155,7 @@ export function Page() {
   };
 
   return (
-    <div className="h-full w-full pt-2 md:pt-8 lg:pt-10 ">
+    <div className="h-full w-full pt-1 sm:2 md:pt-8 lg:pt-10 ">
       <DnDProvider>
         <GamePanel boardWidth={calculateBoardWidth()}>
           <div className="flex items-center justify-center md:justify-center flex-col md:flex-row gap-4 w-full">

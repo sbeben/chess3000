@@ -69,11 +69,11 @@ export async function createServer(isProduction: boolean) {
     const vite = await import("vite");
     const viteServer = await vite.createServer({
       root: directoryRoot,
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, host: "0.0.0.0" },
       logLevel: "error",
     });
     await app.register(import("@fastify/cors"), {
-      origin: ["http://localhost:3000", "http://0.0.0.0:3000"],
+      origin: ["*"],
       credentials: true,
       methods: ["HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: [

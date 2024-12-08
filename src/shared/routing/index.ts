@@ -1,5 +1,7 @@
 import { createEffect, createEvent, createStore, sample } from "effector";
 
+import { getUrl } from "../utils/url";
+
 export { Link } from "./link";
 
 export const $redirectTo = createStore<string | null>(null, {
@@ -53,7 +55,5 @@ export const clientNavigate = createEvent<string>();
 
 sample({
   clock: clientNavigate,
-  target: createEffect((path: string) =>
-    window.location.assign(`${import.meta.env.PUBLIC_ENV__HOST || "http://0.0.0.0:4000"}${path}`),
-  ),
+  target: createEffect((path: string) => window.location.assign(`${getUrl()}${path}`)),
 });

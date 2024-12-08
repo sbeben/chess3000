@@ -15,14 +15,14 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
     <Provider value={fork({ values: scopeValues })}>
       <div className="fixed w-screen h-screen overflow-hidden bg-white">
         <div className="relative h-full w-full flex justify-center items-center flex-col">
-          <div className="max-h-[56px] flex justify-center items-center">
+          <div className="h-[44px] sm:h-[56px] flex justify-center items-center">
             <div
-              className="mt-[-48px] w-[200px] h-[200px] flex justify-center items-center"
+              className="mt-[-36px] sm:mt-[-48px] w-[200px] h-[200px] flex justify-center items-center"
               style={{
                 background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
               }}
             >
-              <h1 className="text-xxl font-bold mt-[48px] cursor-pointer" onClick={() => goTo("/")}>
+              <h1 className="text-xxl font-bold mt-[36px] sm:mt-[48px] cursor-pointer" onClick={() => goTo("/")}>
                 chess3000
               </h1>
             </div>
