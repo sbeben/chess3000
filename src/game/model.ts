@@ -1,7 +1,7 @@
 import { invoke } from "@withease/factories";
-import { Chess } from "chess.js";
-import { createEvent, createStore, restore, sample } from "effector";
-import { and, condition, debug, equals, not, or } from "patronum";
+import { combine, createEvent, createStore, restore, sample } from "effector";
+import { and, condition, debug, equals, not, or, spread } from "patronum";
+import { $$mainResizeListener } from "~/shared/utils/effector";
 import type { BoardPosition, Piece, Square } from "~/types/game";
 
 import { createChess, createTimer } from "./factory";
@@ -18,6 +18,14 @@ export const values = {
 };
 
 export const getPieceValue = (piece: Piece) => values[piece[1]! as keyof typeof values];
+
+const calculatePositionValue = (position: BoardPosition) => {
+  let value = 0;
+  for (const [square, piece] of Object.entries(position)) {
+    value += getPieceValue(piece);
+  }
+  return value;
+};
 
 export const FEN = {
   empty: "8/8/8/8/8/8/8/8 w - - 0 1",
@@ -39,10 +47,25 @@ export const picked = createEvent();
 export const opponentPicked = createEvent();
 
 //pick stores
-export const $isKingOnBoard = createStore<boolean>(false);
+export const newPositionReceived = createEvent<BoardPosition>();
+export const positionChanged = createEvent<BoardPosition>();
+export const $positionObject = restore(positionChanged, null);
+
+export const $value = createStore(35);
+export const $pickedValue = createStore(0);
+export const $remainingPoints = combine([$value, $pickedValue], ([v, p]) => v - p);
+const $isRemainingPointsNegative = $remainingPoints.map((p) => p < 0);
+export const $isKingOnBoard = $positionObject.map((p) =>
+  !p ? false : Object.values(p).filter((piece) => piece[1] === "K").length > 0,
+);
+
 export const $isPickConfirmed = createStore(false).on(picked, () => true);
 export const $isOpponentPickConfirmed = createStore(false).on(opponentPicked, () => true);
-export const $isConfirmDisabled = or(not($isKingOnBoard), $isPickConfirmed);
+export const $isConfirmDisabled = or(not($isKingOnBoard), $isRemainingPointsNegative, $isPickConfirmed);
+
+$isKingOnBoard.watch((v) => console.log("king on board", v));
+$isPickConfirmed.watch((v) => console.log("pick confirmed", v));
+$isRemainingPointsNegative.watch((v) => console.log("remaining points", v));
 
 //game events
 
@@ -56,11 +79,8 @@ export const $totalMoves = createStore<number>(0);
 
 //common events and stores
 export const pieceDropped = createEvent<PieceDrop>();
-export const positionChanged = createEvent<BoardPosition>();
 
-export const $value = createStore(35);
-
-export const $color = createStore<"black" | "white" | null>(null);
+export const $color = createStore<"black" | "white" | null>("white"); //null);
 
 export const switchOrientation = createEvent();
 export const $boardOrientation = createStore<"white" | "black">("white");
@@ -77,90 +97,28 @@ export const $key = createStore<string | null>(null);
 
 export const $selfId = createStore<string | null>(null);
 
-export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("created");
+export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("game");
 
 export const $position = createStore<string | null>(null);
 export const $displayedPosition = createStore<string | null>(null);
-export const $positionObject = restore(positionChanged, null);
+
+export const $boardSize = $$mainResizeListener.$width.map((w) => {
+  const padding = 0; // 16px padding on each side
+  const maxWidth = 600;
+  return Math.min(w - padding, maxWidth);
+});
 
 export const $$state = invoke(createChess);
 
-const kingDropped = sample({
-  clock: sparePieceDropped,
-  filter: ({ piece }) => getPieceValue(piece) === 0,
-});
-
-const kingDroppedOff = sample({
-  clock: pieceDroppedOffBoard,
-  filter: ({ piece }) => getPieceValue(piece) === 0,
-});
-
-const sparePieceDroppedOnKing = sample({
-  clock: sparePieceDropped,
-  source: $positionObject,
-  filter: (position, { square }) => !!position && !!position[square] && getPieceValue(position[square]) === 0,
-});
-
-//when dropped on occupied square
 sample({
   clock: sparePieceDropped,
-  source: { value: $value, position: $positionObject },
-  filter: ({ position }, { square }) => !!position && !!position[square],
-  fn: ({ value, position }, { square }) => value + getPieceValue(position![square]!),
-  target: $value,
-});
-
-//when dropped on empty square
-sample({
-  clock: sparePieceDropped,
-  source: $value,
-  filter: (value, { piece }) => value > 0 && getPieceValue(piece) <= value,
-  fn: (value, { piece, square }) => {
-    return value - getPieceValue(piece);
-  },
-  target: $value,
-});
-
-sample({
-  clock: sparePieceDropped,
-  source: { value: $value, position: $positionObject },
-  filter: ({ value }, { piece }) => value > 0 && getPieceValue(piece) <= value,
+  source: { position: $positionObject },
+  // filter: ({ value }, { piece }) => value > 0 && getPieceValue(piece) <= value,
   fn: ({ position }, { piece, square }) => ({
     ...position,
     [square]: piece,
   }),
   target: positionChanged,
-});
-
-sample({
-  clock: kingDropped,
-  filter: not($isKingOnBoard),
-  fn: () => true,
-  target: $isKingOnBoard,
-});
-
-sample({
-  clock: pieceDroppedOffBoard,
-  source: $value,
-  fn: (value, { piece }) => value + getPieceValue(piece),
-  target: $value,
-});
-
-sample({
-  clock: pieceDroppedOffBoard,
-  source: $positionObject,
-  fn: (position, { piece, square }) => {
-    const { [square]: p, ...rest } = position!;
-    return rest;
-  },
-  target: positionChanged,
-});
-
-sample({
-  clock: [kingDroppedOff, sparePieceDroppedOnKing],
-  filter: $isKingOnBoard,
-  fn: () => false,
-  target: $isKingOnBoard,
 });
 
 condition({
@@ -171,11 +129,20 @@ condition({
 });
 
 sample({
-  clock: pieceDroppedWhilePick,
+  clock: positionChanged,
+  filter: equals($status, "pick"),
+  fn: (position) => calculatePositionValue(position),
+  target: $pickedValue,
+});
+
+sample({
+  clock: pieceDroppedOffBoard,
   source: $positionObject,
-  filter: (position, { to }) => Boolean(position?.[to]),
-  fn: (position, { to }) => ({ piece: position![to]!, square: to }),
-  target: pieceDroppedOffBoard,
+  fn: (position, { piece, square }) => {
+    const { [square]: p, ...rest } = position!;
+    return rest;
+  },
+  target: positionChanged,
 });
 
 sample({
@@ -211,5 +178,3 @@ sample({
   fn: () => false,
   target: $$state.$isStarted,
 });
-
-$positionObject.updates.watch(console.log);

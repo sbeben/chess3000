@@ -4,6 +4,7 @@ import type { Color, Move } from "chess.js";
 import { createStore, sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
+import { $$mainResizeListener } from "~/shared/utils/effector";
 
 import { type WsServerDataDict } from "../../../common/contracts";
 import { pageStarted } from "./+pageStarted";
@@ -20,6 +21,16 @@ sample({
     gameKey: Game.$key,
     playerId: Game.$selfId,
   }),
+});
+
+sample({
+  clock: gate.open,
+  target: $$mainResizeListener.init,
+});
+
+sample({
+  clock: gate.close,
+  target: $$mainResizeListener.cleanup,
 });
 
 sample({

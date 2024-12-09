@@ -1,7 +1,12 @@
 import { useUnit } from "effector-react";
-import { $value } from "~/game/model";
+import { $remainingPoints } from "~/game/model";
 
 export const ValueInfo = () => {
-  const value = useUnit($value);
-  return <h4 className="text-sm font-semibold sm:text-lg">Remaining points: {value}</h4>;
+  const value = useUnit($remainingPoints);
+  return (
+    <div className="flex gap-2 items-center">
+      <h4 className="inline text-sm font-semibold sm:text-lg">Remaining points:</h4>
+      <h4 className={`text-sm font-semibold sm:text-lg ${value >= 0 ? "text-black" : "text-red"}`}>{value}</h4>
+    </div>
+  );
 };

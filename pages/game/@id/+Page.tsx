@@ -8,6 +8,7 @@ import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { FEN, sparePieceDropped } from "~/game/model";
 import { Board, DnDProvider } from "~/game/parts";
 import { colors } from "~/shared/ui/colors";
+import { $$mainResizeListener } from "~/shared/utils/effector";
 import { GamePanel } from "~/widgets/game-panel/GamePanel";
 
 import { gate } from "./model";
@@ -75,6 +76,7 @@ export function Page() {
     scheduledPromotion,
     showPromotionDialog,
     orientation,
+    boardSize,
   } = useUnit({
     pieceDrop: Game.pieceDropped,
     sparePieceDrop: sparePieceDropped,
@@ -95,6 +97,7 @@ export function Page() {
     scheduledPromotion: Game.$$state.$scheduledPromotion,
     showPromotionDialog: Game.$$state.$shouldShowPromotion,
     orientation: Game.$boardOrientation,
+    boardSize: Game.$boardSize,
   });
 
   useGate(gate);
@@ -147,17 +150,10 @@ export function Page() {
     return styles;
   };
 
-  const calculateBoardWidth = () => {
-    if (!isMounted) return 400;
-    const padding = 0; // 16px padding on each side
-    const maxWidth = 600;
-    return Math.min(windowWidth - padding, maxWidth);
-  };
-
   return (
-    <div className="h-full w-full pt-1 sm:2 md:pt-8 lg:pt-10 ">
+    <div className="h-full w-full pt-1 sm:2 md:pt-6 lg:pt-10 ">
       <DnDProvider>
-        <GamePanel boardWidth={calculateBoardWidth()}>
+        <GamePanel>
           <div className="flex items-center justify-center md:justify-center flex-col md:flex-row gap-4 w-full">
             <div className="relative h-fit w-fit max-w-full">
               <Board
@@ -169,7 +165,7 @@ export function Page() {
                   pieceDrop({ from, to, piece });
                   return true;
                 }}
-                isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color![0]}
+                isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color?.[0]}
                 //@ts-expect-error
                 onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
                 onPromotionPieceSelect={(pr, from, to) => {
@@ -177,7 +173,7 @@ export function Page() {
                   promotionSelect(pr || null);
                   return true;
                 }}
-                boardWidth={calculateBoardWidth()}
+                boardWidth={boardSize}
                 showPromotionDialog={showPromotionDialog}
                 promotionToSquare={!!scheduledPromotion ? scheduledPromotion.to || undefined : undefined}
                 boardOrientation={orientation}
@@ -198,6 +194,7 @@ export function Page() {
                 onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
                 customSquareStyles={getSquareStyles()}
                 customNotationStyle={{ color: colors.red.DEFAULT }}
+                // getPositionObject={(position) => positionChanged(position)}
               />
               {status === "pick" && <div className="absolute top-0 left-0 w-full h-1/2 bg-gray opacity-70" />}
             </div>

@@ -12,7 +12,7 @@ export const ConfirmPickButton = ({ className }: { className?: classnames.Value 
     className,
     "bg-blue w-full rounded p-1 md:p-2 lg:p-4 active:bg-blue-600 disabled:bg-blue-800 text-white lg:text-lg disabled:pointer-events-none disabled:cursor-not-allowed",
   );
-  console.log({ style });
+
   return (
     <button onClick={() => confirm()} disabled={isConfirmDisabled} className={style}>
       {isConfirmed ? "waiting" : "confirm"}

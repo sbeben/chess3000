@@ -3,7 +3,7 @@ import { resign as resignEvent } from "~/features/finish-game/model";
 import { ConfirmPickButton } from "~/features/pick-pieces/ConfirmPickButton";
 import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { ValueInfo } from "~/features/pick-pieces/ValueInfo";
-import { $$state, $boardOrientation, $color, $isKingOnBoard, $status, $value, time } from "~/game/model";
+import { $$state, $boardOrientation, $boardSize, $color, $isKingOnBoard, $status, $value, time } from "~/game/model";
 import { colors } from "~/shared/ui/colors";
 import { Heading } from "~/shared/ui/components/Heading";
 import { formatTimer } from "~/shared/utils/format";
@@ -24,7 +24,7 @@ const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: 
   return (
     <div
       className={`
-      bg-gray flex justify-between items-center px-2 py-2 md:py-4 w-full max-w-[600px]
+      bg-gray flex justify-between items-center px-2 md:px-3 py-2 md:py-3 w-full max-w-[600px]
         ${isMobile && isOpponent ? "rounded-t" : ""}
         ${isMobile && !isOpponent ? "rounded-b" : ""}
       `}
@@ -65,12 +65,13 @@ const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: 
     </div>
   );
 };
-const ControlPanel = ({ boardWidth }: { boardWidth: number }) => {
-  const { status, color, value, isKingOnBoard } = useUnit({
+const ControlPanel = () => {
+  const { status, color, value, isKingOnBoard, boardSize } = useUnit({
     status: $status,
     color: $color,
     value: $value,
     isKingOnBoard: $isKingOnBoard,
+    boardSize: $boardSize,
   });
   return (
     <div className="flex gap-1 w-full h-full justify-center items-center p-2">
@@ -80,7 +81,7 @@ const ControlPanel = ({ boardWidth }: { boardWidth: number }) => {
             color={color ?? "white"}
             value={value ?? 25}
             isKingActive={!isKingOnBoard}
-            boardWidth={boardWidth}
+            boardWidth={boardSize}
           />
         </div>
       )}
@@ -94,7 +95,7 @@ const ControlPanel = ({ boardWidth }: { boardWidth: number }) => {
     </div>
   );
 };
-export const GamePanel = ({ children, boardWidth }: { children: React.ReactNode; boardWidth: number }) => {
+export const GamePanel = ({ children }: { children: React.ReactNode }) => {
   const { orientation, color, status } = useUnit({
     orientation: $boardOrientation,
     color: $color,
@@ -119,7 +120,7 @@ export const GamePanel = ({ children, boardWidth }: { children: React.ReactNode;
       {!isDesktop && status !== "created" && (
         <div className="w-full flex flex-col items-center">
           {(status === "game" || status === "finished") && <TimerPanel isOpponent={false} isMobile={true} />}
-          <ControlPanel boardWidth={boardWidth} />
+          <ControlPanel />
         </div>
       )}
 
@@ -135,7 +136,7 @@ export const GamePanel = ({ children, boardWidth }: { children: React.ReactNode;
           >
             <TimerPanel isOpponent={true} />
 
-            <ControlPanel boardWidth={boardWidth} />
+            <ControlPanel />
 
             {status === "pick" ? <ConfirmPickButton /> : <TimerPanel isOpponent={false} />}
           </div>
