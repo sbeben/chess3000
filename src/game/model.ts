@@ -63,10 +63,6 @@ export const $isPickConfirmed = createStore(false).on(picked, () => true);
 export const $isOpponentPickConfirmed = createStore(false).on(opponentPicked, () => true);
 export const $isConfirmDisabled = or(not($isKingOnBoard), $isRemainingPointsNegative, $isPickConfirmed);
 
-$isKingOnBoard.watch((v) => console.log("king on board", v));
-$isPickConfirmed.watch((v) => console.log("pick confirmed", v));
-$isRemainingPointsNegative.watch((v) => console.log("remaining points", v));
-
 //game events
 
 export const backward = createEvent();
@@ -80,7 +76,7 @@ export const $totalMoves = createStore<number>(0);
 //common events and stores
 export const pieceDropped = createEvent<PieceDrop>();
 
-export const $color = createStore<"black" | "white" | null>("white"); //null);
+export const $color = createStore<"black" | "white" | null>(null);
 
 export const switchOrientation = createEvent();
 export const $boardOrientation = createStore<"white" | "black">("white");
@@ -97,8 +93,9 @@ export const $key = createStore<string | null>(null);
 
 export const $selfId = createStore<string | null>(null);
 
-export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("game");
+export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("created");
 
+export const $initialPosition = createStore<string>(FEN.empty);
 export const $position = createStore<string | null>(null);
 export const $displayedPosition = createStore<string | null>(null);
 

@@ -3,6 +3,7 @@ import { resign as resignEvent } from "~/features/finish-game/model";
 import { ConfirmPickButton } from "~/features/pick-pieces/ConfirmPickButton";
 import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { ValueInfo } from "~/features/pick-pieces/ValueInfo";
+import { GameHistory } from "~/features/view-game-history/GameHistory";
 import { $$state, $boardOrientation, $boardSize, $color, $isKingOnBoard, $status, $value, time } from "~/game/model";
 import { colors } from "~/shared/ui/colors";
 import { Heading } from "~/shared/ui/components/Heading";
@@ -74,9 +75,9 @@ const ControlPanel = () => {
     boardSize: $boardSize,
   });
   return (
-    <div className="flex gap-1 w-full h-full justify-center items-center p-2">
+    <div className="w-full h-full p-2 sm-p-4 lg-p-6 max-w-[600px] flex justify-center items-center">
       {status === "pick" && (
-        <div className="flex flex-row lg:flex-col gap-2">
+        <div className=" h-full flex flex-row lg:flex-col gap-2">
           <PickPieces
             color={color ?? "white"}
             value={value ?? 25}
@@ -86,11 +87,14 @@ const ControlPanel = () => {
         </div>
       )}
       {status === "game" && (
-        <>
-          <SwitchOrientationButton />
-          <DrawButton />
-          <ResignButton />
-        </>
+        <div className={` h-full flex flex-col lg:flex-col-reverse lg:justify-between gap-2 items-center`}>
+          <div className="flex items-center gap-2">
+            <SwitchOrientationButton />
+            <DrawButton />
+            <ResignButton />
+          </div>
+          <GameHistory />
+        </div>
       )}
     </div>
   );

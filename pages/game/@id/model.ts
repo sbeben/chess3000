@@ -107,12 +107,10 @@ sample({
   fn: (color, { data }) => {
     const playerColor = (color === "white" ? "w" : "b") as Color;
     const { fen } = data as WsServerDataDict["start"];
-    return { position: fen, display: fen, load: { fen, playerColor } };
+    return { position: fen, load: { fen, playerColor } };
   },
   target: spread({
-    position: Game.$position,
-    display: Game.$displayedPosition,
+    position: [Game.$position, Game.$displayedPosition, Game.$initialPosition],
     load: Game.$$state.load,
   }),
-  //[, Game.$displayedPosition, Game.$$state.load],
 });

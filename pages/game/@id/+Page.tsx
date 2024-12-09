@@ -5,6 +5,7 @@ import { useGate, useUnit } from "effector-react";
 import { EndgameDialog } from "~/features/finish-game/EndgameDialog";
 import { SendInviteDialog } from "~/features/handle-invite/SendInviteDialog";
 import { PickPieces } from "~/features/pick-pieces/PickPieces";
+import { $isViewingHistory } from "~/features/view-game-history/model";
 import { FEN, sparePieceDropped } from "~/game/model";
 import { Board, DnDProvider } from "~/game/parts";
 import { colors } from "~/shared/ui/colors";
@@ -77,6 +78,8 @@ export function Page() {
     showPromotionDialog,
     orientation,
     boardSize,
+    isVeiwingHistory,
+    displayedPosition,
   } = useUnit({
     pieceDrop: Game.pieceDropped,
     sparePieceDrop: sparePieceDropped,
@@ -98,6 +101,8 @@ export function Page() {
     showPromotionDialog: Game.$$state.$shouldShowPromotion,
     orientation: Game.$boardOrientation,
     boardSize: Game.$boardSize,
+    isVeiwingHistory: $isViewingHistory,
+    displayedPosition: Game.$displayedPosition,
   });
 
   useGate(gate);
@@ -159,7 +164,11 @@ export function Page() {
               <Board
                 id="ManualBoardEditor"
                 position={
-                  ["created", "pick"].includes(status) ? (pregamePosition ?? FEN.empty) : (position ?? FEN.empty)
+                  ["created", "pick"].includes(status)
+                    ? (pregamePosition ?? FEN.empty)
+                    : isVeiwingHistory
+                      ? (displayedPosition ?? FEN.empty)
+                      : (position ?? FEN.empty)
                 }
                 onPieceDrop={(from, to, piece) => {
                   pieceDrop({ from, to, piece });
