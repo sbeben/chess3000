@@ -7,14 +7,15 @@ import fastify from "fastify";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { renderPage } from "vike/server";
 
+import { type API, api } from "../common/contracts.js";
 import { CONFIG } from "./config.js";
 import { directoryRoot } from "./directory-root.js";
 import { applyFlyProxy } from "./fly-proxy.js";
 import { createGameCommands, createGameRoom } from "./modules/game.js";
 import { WSMap, parse, send, validate } from "./modules/ws.js";
-import { FEN, customToFen } from "./utils/chess.js";
 import { Timer, parseTime } from "./utils/time.js";
 import { createInviteLink } from "./utils/url.js";
+import { validateReqBody, validateReqParams } from "./utils/validation.js";
 
 export async function createServer(isProduction: boolean) {
   const app = fastify({
@@ -103,39 +104,67 @@ export async function createServer(isProduction: boolean) {
   app.decorateRequest("serverData", null);
   app.addHook("preHandler", async (req, res) => {
     // Process data here based on the route
-    if (req.url.startsWith("/game")) {
+    if (req.url.startsWith("/invite")) {
+      //{ '*': '/invite/wzwc91ykzc9' }
+      //@ts-expect-error
+      const gameKey = req.params["*"].split("/").pop();
+      const gameRoom = WSMap[gameKey];
+
+      if (!gameRoom) {
+        res.redirect("/");
+        return;
+      }
+
+      if (gameRoom.status === "waiting") {
+        req.serverData = {
+          color: gameRoom.creatorColor === "random" ? "random" : gameRoom.creatorColor === "white" ? "black" : "white",
+          time: gameRoom.time.initial / 1000,
+          increment: gameRoom.time.increment / 1000,
+        };
+      } else if (gameRoom.status === "pick" || gameRoom.status === "game") {
+        //TODO spectator logic
+        res.redirect(`/game/${gameKey}:`);
+        return;
+      } else {
+        res.redirect("/");
+        return;
+      }
+
       //console.log({ paramssss: req.params });
       // req.serverData = { foo: "bar" };
     }
   });
 
   app.post<{
-    Body: { value: number; color: "black" | "white" | "random"; time: number; increment: number };
-  }>("/create", function handler(req, res) {
-    // bound to fastify server
-    // this.myDecoration.someFunc()
+    Body: API["CREATE_GAME"];
+  }>(
+    "/create",
+    {
+      preHandler: validateReqBody(api.CREATE_GAME),
+    },
+    function handler(req, res) {
+      // bound to fastify server
+      // this.myDecoration.someFunc()
 
-    const { time, color, value, increment } = req.body;
-    let playerColor = color;
-    if (playerColor === "random") {
-      playerColor = Math.random() > 0.5 ? "black" : "white";
-    }
-    const gameKey = Math.random().toString(36).substring(2, 15);
-    const playerId = Math.random().toString(36).substring(2, 15);
+      const { time, color, value, increment } = req.body;
 
-    // The WebSocket connection is not open at this point, it opens in /game route
-    WSMap[gameKey] = createGameRoom({ gameKey, playerId, playerColor, value, time, increment });
-    console.log("game created", WSMap[gameKey]);
-    res.status(201).send({
-      gameKey,
-      playerId,
-    });
-  });
+      const gameKey = Math.random().toString(36).substring(2, 15);
+      const playerId = Math.random().toString(36).substring(2, 15);
 
-  app.get<{ Params: { gameKey: string } }>(
-    "/invite/:gameKey",
-    //
-    function wsHandler(req, res) {
+      // The WebSocket connection is not open at this point, it opens in /game route
+      WSMap[gameKey] = createGameRoom({ gameKey, playerId, playerColor: color, value, time, increment });
+      console.log("game created", WSMap[gameKey]);
+      res.status(201).send({
+        gameKey,
+        playerId,
+      });
+    },
+  );
+
+  app.get<{ Params: API["ACCEPT_INVITE"] }>(
+    "/accept/:gameKey",
+    { preHandler: validateReqParams(api.ACCEPT_INVITE) },
+    function handler(req, res) {
       const { gameKey } = req.params;
 
       const gameRoom = WSMap[gameKey];
@@ -150,9 +179,9 @@ export async function createServer(isProduction: boolean) {
     },
   );
 
-  app.get<{ Params: { gameKey: string; playerId: string } }>(
+  app.get<{ Params: API["CONNECT"] }>(
     "/connect/:gameKey/:playerId",
-    { websocket: true },
+    { preHandler: validateReqParams(api.CONNECT), websocket: true },
     function handler(socket, req) {
       const { gameKey, playerId } = req.params;
 

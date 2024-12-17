@@ -1,15 +1,13 @@
-import { useEffect, useLayoutEffect, useState } from "react";
-
 import * as Game from "~/game/model";
 import { useGate, useUnit } from "effector-react";
 import { EndgameDialog } from "~/features/finish-game/EndgameDialog";
 import { SendInviteDialog } from "~/features/handle-invite/SendInviteDialog";
-import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { $isViewingHistory } from "~/features/view-game-history/model";
 import { FEN, sparePieceDropped } from "~/game/model";
 import { Board, DnDProvider } from "~/game/parts";
 import { colors } from "~/shared/ui/colors";
-import { $$mainResizeListener } from "~/shared/utils/effector";
+import { isTouchDevice } from "~/shared/utils/touch";
+import type { Piece, Square } from "~/types/game";
 import { GamePanel } from "~/widgets/game-panel/GamePanel";
 
 import { gate } from "./model";
@@ -42,21 +40,6 @@ const isLightSquare = (square: string): boolean => {
 };
 
 export function Page() {
-  const [windowWidth, setWindowWidth] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useLayoutEffect(() => {
-    setIsMounted(true);
-    setWindowWidth(window.innerWidth);
-
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   const {
     pieceDrop,
     sparePieceDrop,
@@ -109,7 +92,6 @@ export function Page() {
 
   const getSquareStyles = (): CustomSquareStyles => {
     const styles: CustomSquareStyles = {};
-
     // Set base colors first
     for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
       for (let rank = 1; rank <= 8; rank++) {
@@ -155,6 +137,25 @@ export function Page() {
     return styles;
   };
 
+  const handleDragStart = (piece: Piece) => {
+    if (isTouchDevice()) {
+      const pieceElement = document.querySelector(`[data-piece='${piece}']`) as HTMLElement;
+      if (pieceElement) {
+        pieceElement.style.transform = "translateY(-20px)";
+        pieceElement.style.scale = "2";
+      }
+    }
+  };
+
+  const handleDragEnd = (piece: Piece) => {
+    if (isTouchDevice()) {
+      const pieceElement = document.querySelector(`[data-piece='${piece}']`) as HTMLElement;
+      if (pieceElement) {
+        pieceElement.style.transform = "none";
+        pieceElement.style.scale = "none";
+      }
+    }
+  };
   return (
     <div className="h-full w-full pt-1 sm:2 md:pt-6 lg:pt-10 ">
       <DnDProvider>
@@ -175,6 +176,9 @@ export function Page() {
                   return true;
                 }}
                 isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color?.[0]}
+                onPieceDragBegin={(piece) => handleDragStart(piece)}
+                onPieceDragEnd={(piece) => handleDragEnd(piece)}
+                // onDragOverSquare={(square) => }
                 //@ts-expect-error
                 onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
                 onPromotionPieceSelect={(pr, from, to) => {

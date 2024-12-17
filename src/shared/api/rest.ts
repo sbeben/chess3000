@@ -1,5 +1,4 @@
 import { createEffect } from "effector";
-import path from "path";
 
 import { backendRequestFx } from "./fetch";
 
@@ -28,4 +27,11 @@ const createGameFx = createEffect<CreateGameReqDTO, CreateGameResDTO>(async (dat
   })) as CreateGameResDTO;
 });
 
-export const api = { createGameFx };
+const acceptInviteFx = createEffect<string, void>(async (gameKey) => {
+  return (await backendRequestFx({
+    path: `/accept/${gameKey}`,
+    method: "GET",
+  })) as void;
+});
+
+export const api = { createGameFx, acceptInviteFx };

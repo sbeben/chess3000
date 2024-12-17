@@ -1,5 +1,4 @@
 import CreateGameForm from "~/features/create-game/CreateGameForm";
-import { Heading } from "~/shared/ui/components/Heading";
 
 export default function PageHome() {
   return (

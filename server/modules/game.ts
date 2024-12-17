@@ -35,7 +35,7 @@ export function createGameRoom({
 }: {
   gameKey: string;
   playerId: string;
-  playerColor: "black" | "white";
+  playerColor: "black" | "white" | "random";
   value: number;
   time: number;
   increment: number;
@@ -44,7 +44,7 @@ export function createGameRoom({
     players: {
       [playerId]: {
         conn: null,
-        color: playerColor,
+        color: playerColor === "random" ? (Math.random() > 0.5 ? "black" : "white") : playerColor,
         pick: null,
         timer: new Timer({ time: time * 1000, increment: increment * 1000 }),
       },
@@ -57,6 +57,7 @@ export function createGameRoom({
       increment: increment * 1000,
     },
     isDrawOffered: null,
+    creatorColor: playerColor,
   };
 }
 

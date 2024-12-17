@@ -1,7 +1,8 @@
-import { createEffect, createEvent, createStore, sample } from "effector";
+import { attach, createEvent, createStore, sample } from "effector";
 import { createGate } from "effector-react";
-import { clientNavigateFx, redirectTo } from "~/shared/routing";
-import { $socket } from "~/shared/ws";
+import { spread } from "patronum";
+import { api } from "~/shared/api/rest";
+import { clientNavigate, redirectTo } from "~/shared/routing";
 
 import { pageStarted } from "./+pageStarted";
 
@@ -12,35 +13,24 @@ export const $id = createStore("");
 
 export const gate = createGate();
 
-const joinGameFx = createEffect(async (id: string) => {
-  console.log(import.meta.env.PUBLIC_ENV__BASE_URL);
-  let loaded = false;
+export const $color = createStore<"black" | "white" | "random">("random");
 
-  const ws = new WebSocket(`ws://${import.meta.env.PUBLIC_ENV__BASE_URL}/join/${id}`);
-  ws.onopen = () => {
-    console.log(`WebSocket connection established`);
-    // ws.send("hello");
-  };
-  ws.onmessage = (event) => {
-    console.log("Message from server:", event.data);
-  };
-  const timeout = 30000; // 30 seconds timeout
-  const startTime = Date.now();
+export const $time = createStore(0);
 
-  while (!loaded) {
-    if (Date.now() - startTime > timeout) {
-      throw new Error("WebSocket connection timeout");
-    }
-    loaded = ws.readyState === WebSocket.OPEN;
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-  return ws;
+export const $increment = createStore(0);
+
+const joinGameFx = attach({ effect: api.acceptInviteFx });
+
+sample({
+  clock: pageStarted,
+  filter: ({ data }) => !data.id || !data.color || !data.time,
+  target: redirectTo("/"),
 });
 
 sample({
   clock: pageStarted,
-  fn: ({ data }) => data.id,
-  target: $id,
+  fn: ({ data }) => data,
+  target: spread({ id: $id, color: $color, time: $time, increment: $increment }),
 });
 
 //client
@@ -51,18 +41,6 @@ sample({
 });
 
 sample({
-  clock: joinGameFx.doneData,
-  target: $socket,
-});
-
-sample({
-  clock: joinGameFx.doneData,
-  source: $id,
-  fn: (id) => `/game/${id}`,
-  target: clientNavigateFx,
-});
-
-sample({
-  clock: joinGameFx.failData,
-  target: redirectTo("/"),
+  clock: [declined, joinGameFx.failData],
+  target: clientNavigate.prepend(() => "/"),
 });

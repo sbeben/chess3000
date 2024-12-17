@@ -21,6 +21,7 @@ export type GameRoom = {
     increment: number;
   };
   isDrawOffered: "black" | "white" | null;
+  creatorColor: "black" | "white" | "random";
 };
 
 export type WSMapType = Record<string, GameRoom>;
