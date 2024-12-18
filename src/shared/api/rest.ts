@@ -27,11 +27,11 @@ const createGameFx = createEffect<CreateGameReqDTO, CreateGameResDTO>(async (dat
   })) as CreateGameResDTO;
 });
 
-const acceptInviteFx = createEffect<string, void>(async (gameKey) => {
+const acceptInviteFx = createEffect<string, { gameKey: string; playerId: string }>(async (gameKey) => {
   return (await backendRequestFx({
     path: `/accept/${gameKey}`,
     method: "GET",
-  })) as void;
+  })) as { gameKey: string; playerId: string };
 });
 
 export const api = { createGameFx, acceptInviteFx };

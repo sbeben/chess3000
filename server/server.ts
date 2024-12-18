@@ -175,7 +175,10 @@ export async function createServer(isProduction: boolean) {
 
       const acceptingPlayerId = Math.random().toString(36).substring(2, 15);
 
-      res.redirect(`/game/${gameKey}:${acceptingPlayerId}`);
+      res.status(200).send({
+        gameKey,
+        playerId: acceptingPlayerId,
+      });
     },
   );
 
@@ -190,6 +193,7 @@ export async function createServer(isProduction: boolean) {
         return;
       }
       const gameRoom = WSMap[gameKey];
+
       if (!gameRoom) {
         socket.close();
         throw new Error("Connection not found");

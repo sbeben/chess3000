@@ -114,7 +114,7 @@ export function Page() {
         styles[move.to] = {
           ...styles[move.to],
           background: game.get(move.to)
-            ? `radial-gradient(circle, rgba(255,0,0,.1) 25%, transparent 25%), ${baseColor}`
+            ? `radial-gradient(circle, ${colors.red.DEFAULT} 20%, transparent 80%), ${baseColor}`
             : `radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%), ${baseColor}`,
           cursor: "pointer",
         };

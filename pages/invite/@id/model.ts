@@ -41,6 +41,12 @@ sample({
 });
 
 sample({
+  clock: joinGameFx.doneData,
+  fn: ({ gameKey, playerId }) => `/game/${gameKey}:${playerId}`,
+  target: clientNavigate,
+});
+
+sample({
   clock: [declined, joinGameFx.failData],
   target: clientNavigate.prepend(() => "/"),
 });

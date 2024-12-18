@@ -112,7 +112,20 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
       if (!!otherPlayer?.pick) {
         const fen = customToFen({ ...position, ...otherPlayer.pick });
         game.load(fen, { skipValidation: true });
-        if (game.isCheck() || game.isCheckmate() || game.isStalemate() || game.isInsufficientMaterial()) {
+
+        let incorrectPick = false;
+
+        incorrectPick = game.isCheck() || game.isCheckmate() || game.isStalemate() || game.isInsufficientMaterial();
+
+        if (!incorrectPick) {
+          const blackToMoveFen = fen.replace(" w ", " b ");
+          const tempGame = new Chess();
+          tempGame.load(blackToMoveFen, { skipValidation: true });
+          incorrectPick =
+            tempGame.isCheck() || tempGame.isCheckmate() || tempGame.isStalemate() || tempGame.isInsufficientMaterial();
+        }
+        //TODO decide what to do if the pick is incorrect, also send the fen
+        if (incorrectPick) {
           send(otherPlayer!.conn!, "game_over", { result: "draw", reason: "invalid_pick" });
           send(player!.conn!, "game_over", { result: "draw", reason: "invalid_pick" });
         } else {
@@ -199,6 +212,7 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
           }
         }
       } catch (e) {
+        //TODO send it to the player who moved instead and check why it got here when wove was made under pinned king
         send(otherPlayer.conn!, "error", { message: (e as Error).message });
       }
     } else if (type === "draw_offer") {
