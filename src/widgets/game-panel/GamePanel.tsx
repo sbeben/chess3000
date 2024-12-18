@@ -25,7 +25,7 @@ const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: 
   return (
     <div
       className={`
-      bg-gray flex justify-between items-center px-2 md:px-3 py-2 md:py-3 w-full max-w-[600px]
+      flex justify-between items-center px-2 md:px-3 pb-2 pt-1 md:py-3 w-full max-w-[600px]
         ${isMobile && isOpponent ? "rounded-t" : ""}
         ${isMobile && !isOpponent ? "rounded-b" : ""}
       `}
