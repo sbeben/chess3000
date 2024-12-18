@@ -1,7 +1,7 @@
 import { createFactory } from "@withease/factories";
 import { Chess, type Color, type Move, type Piece, type Square } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample } from "effector";
-import { and, condition, debug, interval, not } from "patronum";
+import { and, condition, debug, interval, not, spread } from "patronum";
 
 export type MoveEvent = { from: Square; to: Square; promotion?: string };
 
@@ -352,6 +352,9 @@ export const createTimer = createFactory(() => {
 
   const $timer = createStore(0);
   const $increment = createStore(0);
+
+  const $lastTickTimestamp = createStore(0);
+
   const start = createEvent<{ offset: number }>();
   const stop = createEvent<{ offset: number }>();
 
@@ -369,16 +372,19 @@ export const createTimer = createFactory(() => {
   });
 
   sample({
-    clock: tick,
-    source: $timer,
-    fn: (time) => time - TICK_DURATION,
-    target: $timer,
+    clock: startTimer,
+    fn: () => Date.now(),
+    target: [$startTime, $lastTickTimestamp],
   });
 
   sample({
-    clock: startTimer,
-    fn: () => Date.now(),
-    target: $startTime,
+    clock: tick,
+    source: { timer: $timer, lastTickTimestamp: $lastTickTimestamp },
+    fn: ({ timer, lastTickTimestamp }) => {
+      const now = Date.now();
+      return { timer: timer - (now - lastTickTimestamp), lastTickTimestamp: now };
+    },
+    target: spread({ timer: $timer, lastTickTimestamp: $lastTickTimestamp }),
   });
 
   sample({
