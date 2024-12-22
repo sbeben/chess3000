@@ -1,5 +1,6 @@
 import { useUnit } from "effector-react";
-import { $remainingPoints } from "~/game/model";
+
+import { $remainingPoints } from "./model";
 
 export const ValueInfo = () => {
   const value = useUnit($remainingPoints);

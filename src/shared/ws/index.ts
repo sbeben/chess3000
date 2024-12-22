@@ -1,16 +1,10 @@
-import type { Move } from "chess.js";
 import { attach, createEffect, createEvent, createStore, sample, scopeBind } from "effector";
-import type { BoardPosition } from "~/types/game";
 
-import {
-  WS_CLIENT_COMMANDS_SCHEMA_DICT,
-  type WsClientDataDict,
-  type WsServerDataDict,
-} from "../../../common/contracts";
+import { type WsClientDataDict, type WsServerDataDict } from "../../../common/contracts";
 import { getUrl, getWebSocketUrl } from "../utils/url";
 
-type WsServerEventType = keyof WsServerDataDict;
-type WsClientEventType = keyof WsClientDataDict;
+export type WsServerEventType = keyof WsServerDataDict;
+export type WsClientEventType = keyof WsClientDataDict;
 
 type WsMessage = { type: WsServerEventType; data: WsServerDataDict[WsServerEventType] };
 
@@ -22,9 +16,7 @@ export function createMessage<T extends WsClientEventType>(type: T, data?: WsCli
   return { type, data: data! };
 }
 
-//const wsConnectionFailed = createEvent()
-
-export const sendMessage = createEvent<Record<string, string | object>>();
+export const sendMessage = createEvent<Record<string, string | object | undefined>>();
 export const close = createEvent<number>();
 
 export const opened = createEvent();
@@ -33,7 +25,6 @@ const rawMessageReceived = createEvent<string>();
 export const messageReceived = createEvent<WsMessage>();
 
 export const $socket = createStore<WebSocket | null>(null);
-export const $socketConnectionFail = createStore(false);
 export const $isConnected = createStore(false)
   .on(opened, () => true)
   .on(closed, () => false);
@@ -116,7 +107,7 @@ const sendEffect = createEffect<{ socket: WebSocket | null; message: any }, void
 
 const sendMessageFx = attach({
   source: $socket,
-  effect: (socket, message: Record<string, string | object>) => sendEffect({ socket, message }),
+  effect: (socket, message: Record<string, string | object | undefined>) => sendEffect({ socket, message }),
 });
 
 sample({

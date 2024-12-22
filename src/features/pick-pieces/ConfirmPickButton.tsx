@@ -1,6 +1,7 @@
-import classnames, { type Argument, type ArgumentArray, type Mapping } from "classnames";
+import classnames from "classnames";
 import { useUnit } from "effector-react";
-import { $isConfirmDisabled, $isPickConfirmed, picked } from "~/game/model";
+
+import { $isConfirmDisabled, $isPickConfirmed, picked } from "./model";
 
 export const ConfirmPickButton = ({ className }: { className?: classnames.Value }) => {
   const { confirm, isConfirmDisabled, isConfirmed } = useUnit({

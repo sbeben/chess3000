@@ -1,6 +1,5 @@
-import { useUnit } from "effector-react";
-import { $isConfirmDisabled, $isPickConfirmed, picked, values } from "~/game/model";
 import { SparePiece } from "~/game/parts";
+import { values } from "~/game/parts/helpers";
 import type { Piece } from "~/types/game";
 
 type Props = {

@@ -65,6 +65,9 @@ export type Square =
   | "f1"
   | "g1"
   | "h1";
+
+export type MoveEvent = { from: Square; to: Square; promotion?: string };
+export type PieceDrop = { piece: Piece; from: Square; to: Square };
 export type Piece = "wP" | "wB" | "wN" | "wR" | "wQ" | "wK" | "bP" | "bB" | "bN" | "bR" | "bQ" | "bK";
 export type BoardPosition = {
   [square in Square]?: Piece;

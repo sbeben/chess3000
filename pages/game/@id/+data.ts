@@ -2,7 +2,6 @@ import type { PageContextServer } from "vike/types";
 
 export async function data(pageContext: PageContextServer<Record<string, string>>) {
   const { routeParams, data } = pageContext;
-  console.log({ routeParams });
   const [gameKey, playerId] = routeParams.id?.split(":") ?? [null, null];
 
   return {

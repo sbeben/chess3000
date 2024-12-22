@@ -2,12 +2,14 @@ import * as Game from "~/game/model";
 import { useGate, useUnit } from "effector-react";
 import { EndgameDialog } from "~/features/finish-game/EndgameDialog";
 import { SendInviteDialog } from "~/features/handle-invite/SendInviteDialog";
+import { $isKingOnBoard, $value, pieceDroppedOffBoard, sparePieceDropped } from "~/features/pick-pieces/model";
+import { $boardOrientation } from "~/features/switch-board-orientation/model";
 import { $isViewingHistory } from "~/features/view-game-history/model";
-import { FEN, sparePieceDropped } from "~/game/model";
 import { Board, DnDProvider } from "~/game/parts";
+import { FEN } from "~/game/parts/helpers";
 import { colors } from "~/shared/ui/colors";
 import { isTouchDevice } from "~/shared/utils/touch";
-import type { Piece, Square } from "~/types/game";
+import type { Piece } from "~/types/game";
 import { GamePanel } from "~/widgets/game-panel/GamePanel";
 
 import { gate } from "./model";
@@ -43,7 +45,6 @@ export function Page() {
   const {
     pieceDrop,
     sparePieceDrop,
-    value,
     color,
     isKingOnBoard,
     pieceDroppedOff,
@@ -52,7 +53,7 @@ export function Page() {
     positionChanged,
     pregamePosition,
     game,
-    move,
+
     validMoves,
     selectedSquare,
     squareClicked,
@@ -66,23 +67,22 @@ export function Page() {
   } = useUnit({
     pieceDrop: Game.pieceDropped,
     sparePieceDrop: sparePieceDropped,
-    pieceDroppedOff: Game.pieceDroppedOffBoard,
-    value: Game.$value,
+    pieceDroppedOff: pieceDroppedOffBoard,
     color: Game.$color,
-    isKingOnBoard: Game.$isKingOnBoard,
+    isKingOnBoard: $isKingOnBoard,
     status: Game.$status,
     positionChanged: Game.positionChanged,
     pregamePosition: Game.$positionObject,
     position: Game.$$state.$fen,
     game: Game.$$state.$chess,
-    move: Game.$$state.move,
+
     squareClicked: Game.$$state.squareClicked,
     validMoves: Game.$$state.$validMoves,
     selectedSquare: Game.$$state.$selectedSquare,
     promotionSelect: Game.$$state.promotionPieceSelected,
     scheduledPromotion: Game.$$state.$scheduledPromotion,
     showPromotionDialog: Game.$$state.$shouldShowPromotion,
-    orientation: Game.$boardOrientation,
+    orientation: $boardOrientation,
     boardSize: Game.$boardSize,
     isVeiwingHistory: $isViewingHistory,
     displayedPosition: Game.$displayedPosition,
@@ -179,7 +179,6 @@ export function Page() {
                 onPieceDragBegin={(piece) => handleDragStart(piece)}
                 onPieceDragEnd={(piece) => handleDragEnd(piece)}
                 // onDragOverSquare={(square) => }
-                //@ts-expect-error
                 onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
                 onPromotionPieceSelect={(pr, from, to) => {
                   //@ts-expect-error

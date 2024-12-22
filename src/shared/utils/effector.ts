@@ -208,4 +208,4 @@ const resizeListener: ResizeListener = createFactory(() => {
   };
 });
 
-export const $$mainResizeListener = invoke(resizeListener);
+export const $$resizeListener = invoke(resizeListener);

@@ -1,10 +1,12 @@
 import { useUnit } from "effector-react";
-import { resign as resignEvent } from "~/features/finish-game/model";
 import { ConfirmPickButton } from "~/features/pick-pieces/ConfirmPickButton";
 import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { ValueInfo } from "~/features/pick-pieces/ValueInfo";
+import { $isKingOnBoard, $value } from "~/features/pick-pieces/model";
+import { SwitchOrientationButton } from "~/features/switch-board-orientation/SwitchOrientationButton";
+import { $boardOrientation } from "~/features/switch-board-orientation/model";
 import { GameHistory } from "~/features/view-game-history/GameHistory";
-import { $$state, $boardOrientation, $boardSize, $color, $isKingOnBoard, $status, $value, time } from "~/game/model";
+import { $$state, $boardSize, $color, $status, time } from "~/game/model";
 import { colors } from "~/shared/ui/colors";
 import { Heading } from "~/shared/ui/components/Heading";
 import { formatTimer } from "~/shared/utils/format";
@@ -12,7 +14,6 @@ import { useBreakpoint } from "~/shared/utils/useBreakpoints";
 
 import { DrawButton } from "./DrawButton";
 import { ResignButton } from "./ResignButton";
-import { SwitchOrientationButton } from "./SwitchOrientationButton";
 
 const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: boolean }) => {
   const { color, turn, whiteTime, blackTime, status } = useUnit({

@@ -1,6 +1,7 @@
 import { useUnit } from "effector-react";
-import { switchOrientation } from "~/game/model";
 import { colors } from "~/shared/ui/colors";
+
+import { switchOrientation } from "./model";
 
 export const SwitchOrientationButton = () => {
   const change = useUnit(switchOrientation);
