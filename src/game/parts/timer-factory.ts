@@ -3,7 +3,9 @@ import { createEvent, createStore, sample } from "effector";
 import { interval, spread } from "patronum";
 
 export const createTimer = createFactory(() => {
-  const TICK_DURATION = 100; //ms
+  const TICK_DURATION = 10; //ms
+
+  const setup = createEvent<{ time: number; increment: number }>();
 
   const $timer = createStore(0);
   const $increment = createStore(0);
@@ -24,6 +26,11 @@ export const createTimer = createFactory(() => {
     timeout: TICK_DURATION,
     start: startTimer,
     stop: stopTimer,
+  });
+
+  sample({
+    clock: setup,
+    target: spread({ time: $timer, increment: $increment }),
   });
 
   sample({
@@ -65,6 +72,7 @@ export const createTimer = createFactory(() => {
   });
 
   return {
+    setup,
     $timer,
     $increment,
     start,

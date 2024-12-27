@@ -97,7 +97,7 @@ export default {
         },
       },
       fontFamily: {
-        title: ["Be Vietnam Pro", "sans-serif"],
+        title: ["Geist", "sans-serif"],
         text: ["Unbounded", "sans-serif"],
       },
       fontSize: {

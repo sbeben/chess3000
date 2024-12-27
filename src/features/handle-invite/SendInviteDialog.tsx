@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import * as Game from "~/game/model";
 import { useUnit } from "effector-react";
@@ -9,7 +9,26 @@ export const SendInviteDialog = () => {
   });
 
   const [copied, setCopied] = useState(false);
+
+  // Add useEffect to handle the timeout
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (copied) {
+      timeoutId = setTimeout(() => {
+        setCopied(false);
+      }, 3000); // 3 seconds
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [copied]);
+
   if (!inviteLink) return null;
+
   const handleCopy = async () => {
     try {
       if (navigator?.clipboard) {
