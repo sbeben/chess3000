@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  /* @font-face {
+  @font-face {
     font-family: "Unbounded";
     src: url("/src/shared/ui/fonts/Unbounded-VariableFont_wght.ttf") format("truetype-variations");
     font-weight: 100 900;
@@ -15,7 +15,7 @@
     src: url("/src/shared/ui/fonts/Geist-VariableFont_wght.ttf") format("truetype-variations");
     font-weight: 100 900;
     font-display: block;
-  } */
+  }
 
   body {
     font-family: "Geist", sans-serif;
