@@ -4,10 +4,11 @@ import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { ValueInfo } from "~/features/pick-pieces/ValueInfo";
 import { $isKingOnBoard, $value } from "~/features/pick-pieces/model";
 import { SwitchOrientationButton } from "~/features/switch-board-orientation/SwitchOrientationButton";
-import { $boardOrientation } from "~/features/switch-board-orientation/model";
+import { $boardOrientation, $isBoardOrientationOriginal } from "~/features/switch-board-orientation/model";
 import { GameHistory } from "~/features/view-game-history/GameHistory";
 import { HistoryButtons } from "~/features/view-game-history/HistoryButtons";
 import { $$state, $boardSize, $color, $status, time } from "~/game/model";
+import { Timer } from "~/game/parts";
 import { colors } from "~/shared/ui/colors";
 import { Heading } from "~/shared/ui/components/Heading";
 import { formatTimer } from "~/shared/utils/format";
@@ -53,15 +54,7 @@ const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: 
                 ♟️
               </div>
             )}
-            <div>
-              {isOpponent
-                ? color === "white"
-                  ? (formatTimer(blackTime) ?? "5:00")
-                  : (formatTimer(whiteTime) ?? "5:00")
-                : color === "white"
-                  ? (formatTimer(whiteTime) ?? "5:00")
-                  : (formatTimer(blackTime) ?? "5:00")}
-            </div>
+            <Timer time={isOpponent !== (color === "white") ? blackTime : whiteTime} />
           </div>
         </>
       )}
@@ -79,7 +72,7 @@ const ControlPanel = () => {
   return (
     <div className="w-full lg:h-full p-2 sm-p-4 lg-p-6 max-w-[600px]">
       {status === "pick" && (
-        <div className=" h-full flex flex-row lg:flex-col gap-2">
+        <div className=" h-full flex flex-row lg:flex-col justify-center items-center gap-2">
           <PickPieces
             color={color ?? "white"}
             value={value ?? 25}
@@ -108,9 +101,8 @@ const ControlPanel = () => {
   );
 };
 export const GamePanel = ({ children }: { children: React.ReactNode }) => {
-  const { orientation, color, status } = useUnit({
-    orientation: $boardOrientation,
-    color: $color,
+  const { isOriginalOrientation, status } = useUnit({
+    isOriginalOrientation: $isBoardOrientationOriginal,
     status: $status,
   });
 
@@ -121,7 +113,7 @@ export const GamePanel = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile: Top timer panel */}
       {!isDesktop && status !== "created" && (
         <div className="w-full flex justify-center">
-          <TimerPanel isOpponent={true} isMobile={true} />
+          <TimerPanel isOpponent={isOriginalOrientation} isMobile={true} />
         </div>
       )}
 
@@ -131,7 +123,9 @@ export const GamePanel = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile: Bottom panels */}
       {!isDesktop && status !== "created" && (
         <div className="w-full flex flex-col items-center">
-          {(status === "game" || status === "finished") && <TimerPanel isOpponent={false} isMobile={true} />}
+          {(status === "game" || status === "finished") && (
+            <TimerPanel isOpponent={!isOriginalOrientation} isMobile={true} />
+          )}
           <ControlPanel />
         </div>
       )}
@@ -139,19 +133,11 @@ export const GamePanel = ({ children }: { children: React.ReactNode }) => {
       {/* Desktop: Side panel */}
       {isDesktop && status !== "created" && (
         <div className="flex flex-col h-full max-h-[600px] w-[300px] bg-white border border-gray rounded">
-          <div
-            className={`flex flex-col h-full ${
-              (orientation === "white" && color === "white") || (orientation === "black" && color === "black")
-                ? ""
-                : "flex-col-reverse"
-            }`}
-          >
-            <TimerPanel isOpponent={true} />
-            <div className="flex-1 overflow-hidden">
-              <ControlPanel />
-            </div>
-            {status === "pick" ? <ConfirmPickButton /> : <TimerPanel isOpponent={false} />}
+          <TimerPanel isOpponent={isOriginalOrientation} />
+          <div className="flex-1 overflow-hidden">
+            <ControlPanel />
           </div>
+          {status === "pick" ? <ConfirmPickButton /> : <TimerPanel isOpponent={!isOriginalOrientation} />}
         </div>
       )}
     </div>

@@ -43,7 +43,7 @@ export const Timer = ({ time }: { time: number }) => {
       <p className={`${textSizeStyles}`}>{m < 10 ? `0${m}` : m}</p>
       <p className={`${textSizeStyles}`}>:</p>
       <p className={`${textSizeStyles}`}>{s < 10 ? `0${s}` : s}</p>
-      {s < 10 && (
+      {h < 1 && m < 1 && s < 10 && (
         <>
           <p className={`${textSizeStyles}`}>:</p>
           <p className={`${classNames(textSizeStyles)}`}>{ms < 10 ? `0${ms}` : ms}</p>
