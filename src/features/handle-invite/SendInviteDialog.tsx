@@ -17,7 +17,7 @@ export const SendInviteDialog = () => {
     if (copied) {
       timeoutId = setTimeout(() => {
         setCopied(false);
-      }, 3000); // 3 seconds
+      }, 1500); // 3 seconds
     }
 
     return () => {

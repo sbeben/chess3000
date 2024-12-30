@@ -21,7 +21,7 @@ interface CustomSquareStyles {
 const isLightSquare = (square: string): boolean => {
   const file = square.charCodeAt(0) - "a".charCodeAt(0);
   const rank = parseInt(square[1]!) - 1;
-  return (file + rank) % 2 === 0;
+  return (file + rank) % 2 !== 0;
 };
 
 export function Page() {

@@ -34,68 +34,51 @@ export const GameHistory = () => {
 
     return acc;
   }, []);
-  console.log({
-    currentMove,
-    history,
-  });
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-2 justify-center">
-        <button
-          onClick={() => toFirst()}
-          disabled={currentMove <= 1}
-          className="px-2 py-1 bg-white rounded disabled:opacity-50"
-        >
-          ⏮️
-        </button>
-        <button
-          onClick={() => oneBack()}
-          disabled={currentMove <= 1}
-          className="px-2 py-1 bg-white rounded disabled:opacity-50"
-        >
-          ⏪
-        </button>
-        <button
-          onClick={() => oneForward()}
-          disabled={currentMove === history.length}
-          className="px-2 py-1 bg-white rounded disabled:opacity-50"
-        >
-          ⏩
-        </button>
-        <button
-          onClick={() => toLast()}
-          disabled={currentMove === history.length}
-          className="px-2 py-1 bg-white rounded disabled:opacity-50"
-        >
-          ⏭️
-        </button>
-      </div>
 
+  return (
+    <div className="flex flex-col gap-2 w-full lg:h-full">
       <div
-        className={`
-        overflow-y-auto max-h-40
-        flex flex-wrap lg:flex-col`}
+        className="
+        w-full
+        lg:h-full
+        overflow-x-scroll
+        overflow-y-scroll
+        touch-pan-x"
       >
-        {movesPaired.length > 0 &&
-          movesPaired.map((pair, index) => (
-            <div key={index} className="flex gap-4 lg:mr-0 lg:w-full items-center">
-              <span className="min-w-[2ch] text-gray">{index + 1}.</span>
-              <button
-                onClick={() => goToMove(index * 2 + 1)}
-                className={`px-2 py-1 rounded ${currentMove === index * 2 + 1 && currentMove === history.length ? "bg-blue-700 pointer-events-none" : currentMove === index * 2 + 1 ? "bg-blue text-white" : "bg-white hover:bg-gray-700"}`}
-              >
-                {pair.white}
-              </button>
-              {pair.black && (
+        <div className="flex lg:flex-col gap-2 min-w-max">
+          {movesPaired.length > 0 &&
+            movesPaired.map((pair, index) => (
+              <div key={index} className="flex items-center shrink-0">
+                <span className="text-gray w-[20px]">{index + 1}.</span>
                 <button
-                  onClick={() => goToMove(index * 2 + 2)}
-                  className={`px-2 py-1 rounded ${currentMove === history.length && currentMove === index * 2 + 2 ? "bg-blue-700 pointer-events-none" : currentMove === index * 2 + 2 ? "bg-blue-500 text-white" : "bg-white hover:bg-gray-700"}`}
+                  onClick={() => goToMove(index * 2 + 1)}
+                  className={`px-2 py-1 rounded ${
+                    currentMove === index * 2 + 1 && currentMove === history.length
+                      ? "bg-blue-700 pointer-events-none"
+                      : currentMove === index * 2 + 1
+                        ? "bg-blue text-white"
+                        : "bg-white hover:bg-gray-700"
+                  }`}
                 >
-                  {pair.black}
+                  {pair.white}
                 </button>
-              )}
-            </div>
-          ))}
+                {pair.black && (
+                  <button
+                    onClick={() => goToMove(index * 2 + 2)}
+                    className={`px-2 py-1 rounded ${
+                      currentMove === history.length && currentMove === index * 2 + 2
+                        ? "bg-blue-700 pointer-events-none"
+                        : currentMove === index * 2 + 2
+                          ? "bg-blue-500 text-white"
+                          : "bg-white hover:bg-gray-700"
+                    }`}
+                  >
+                    {pair.black}
+                  </button>
+                )}
+              </div>
+            ))}
+        </div>
       </div>
 
       {isViewingHistory && (

@@ -28,7 +28,7 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
             </div>
           </div>
 
-          <div className="h-full w-full overflow-y-scroll">{children}</div>
+          <div className="h-full w-full overflow-y-scroll overflow-x-hidden">{children}</div>
         </div>
       </div>
     </Provider>
