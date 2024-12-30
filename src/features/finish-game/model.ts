@@ -1,8 +1,8 @@
 import { invoke } from "@withease/factories";
 import { createEvent, createStore, sample } from "effector";
 import { condition, not, or, spread } from "patronum";
+import { moveReceived } from "~/game/commands";
 import { $$state, $color, $status, time } from "~/game/model";
-import { moveReceived } from "~/game/parts/commands";
 import { $$setableStore, $$toggle } from "~/shared/utils/effector";
 import { createMessage, messageReceived, sendMessage } from "~/shared/ws";
 

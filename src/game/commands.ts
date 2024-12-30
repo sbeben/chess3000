@@ -3,7 +3,7 @@ import type { Move } from "chess.js";
 import { createEvent, sample, scopeBind } from "effector";
 import { type WsClientEventType, createMessage, messageReceived, sendMessage } from "~/shared/ws";
 
-import type { WsClientDataDict, WsServerDataDict } from "../../../common/contracts";
+import type { WsClientDataDict, WsServerDataDict } from "../../common/contracts";
 
 //input
 export const moveReceived = sample({

@@ -4,7 +4,7 @@ import { EndgameDialog } from "~/features/finish-game/EndgameDialog";
 import { SendInviteDialog } from "~/features/handle-invite/SendInviteDialog";
 import { $isKingOnBoard, $value, pieceDroppedOffBoard, sparePieceDropped } from "~/features/pick-pieces/model";
 import { $boardOrientation } from "~/features/switch-board-orientation/model";
-import { $isViewingHistory } from "~/features/view-game-history/model";
+import { $currentHistoryMove, $isViewingHistory } from "~/features/view-game-history/model";
 import { Board, DnDProvider } from "~/game/parts";
 import { FEN } from "~/game/parts/helpers";
 import { colors } from "~/shared/ui/colors";
@@ -17,23 +17,6 @@ import { gate } from "./model";
 interface CustomSquareStyles {
   [square: string]: React.CSSProperties;
 }
-
-const squareStyles = {
-  selectedSquare: {
-    backgroundColor: colors.green_yellow.DEFAULT,
-  },
-  validMove: {
-    background: `radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)`,
-    cursor: "pointer",
-  },
-  captureMove: {
-    background: `radial-gradient(circle, rgba(255,0,0,.1) 25%, transparent 25%)`,
-    cursor: "pointer",
-  },
-  checkedKing: {
-    background: colors.red.DEFAULT,
-  },
-};
 
 const isLightSquare = (square: string): boolean => {
   const file = square.charCodeAt(0) - "a".charCodeAt(0);
@@ -64,6 +47,7 @@ export function Page() {
     boardSize,
     isVeiwingHistory,
     displayedPosition,
+    currentHistoryMove,
   } = useUnit({
     pieceDrop: Game.pieceDropped,
     sparePieceDrop: sparePieceDropped,
@@ -86,23 +70,46 @@ export function Page() {
     boardSize: Game.$boardSize,
     isVeiwingHistory: $isViewingHistory,
     displayedPosition: Game.$displayedPosition,
+
+    currentHistoryMove: $currentHistoryMove,
   });
 
   useGate(gate);
 
   const getSquareStyles = (): CustomSquareStyles => {
     const styles: CustomSquareStyles = {};
-    // Set base colors first
+
+    // Set base colors
     for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
       for (let rank = 1; rank <= 8; rank++) {
         const square = `${String.fromCharCode(file)}${rank}`;
         const baseColor = isLightSquare(square) ? colors.white.DEFAULT : colors.blue.DEFAULT;
         styles[square] = {
-          background: baseColor, // Changed from backgroundColor to background
+          background: baseColor,
         };
       }
     }
 
+    //highlighting for the last move
+    const history = game.history({ verbose: true });
+    const lastMove = isVeiwingHistory ? history[currentHistoryMove - 1] : history[history.length - 1];
+
+    if (lastMove) {
+      const fromSquare = lastMove.from;
+      const toSquare = lastMove.to;
+
+      styles[fromSquare] = {
+        ...styles[fromSquare],
+        background: `linear-gradient(${styles[fromSquare]!.background}, ${colors.green_yellow.DEFAULT})`,
+      };
+
+      styles[toSquare] = {
+        ...styles[toSquare],
+        background: `linear-gradient(${styles[toSquare]!.background}, ${colors.green_yellow.DEFAULT})`,
+      };
+    }
+
+    //highlight for available move squares
     if (selectedSquare) {
       styles[selectedSquare] = {
         ...styles[selectedSquare],
@@ -114,13 +121,14 @@ export function Page() {
         styles[move.to] = {
           ...styles[move.to],
           background: game.get(move.to)
-            ? `radial-gradient(circle, ${colors.red.DEFAULT} 20%, transparent 80%), ${baseColor}`
+            ? colors.red.DEFAULT
             : `radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%), ${baseColor}`,
           cursor: "pointer",
         };
       });
     }
 
+    //highlight for check
     if (game.isCheck()) {
       const kingSquare = game
         .board()

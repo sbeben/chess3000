@@ -3,7 +3,9 @@ import { createStore, sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
 import { $value, picked } from "~/features/pick-pieces/model";
+import "~/features/play-game/model";
 import { $boardOrientation } from "~/features/switch-board-orientation/model";
+import { gameCreated, gameJoined, gameStarted, opponentAccepted } from "~/game/commands";
 import {
   $$state,
   $color,
@@ -17,7 +19,6 @@ import {
   $status,
   time,
 } from "~/game/model";
-import { gameCreated, gameJoined, gameStarted, opponentAccepted } from "~/game/parts/commands";
 import { $$resizeListener } from "~/shared/utils/effector";
 import { createMessage, initWebsocketFx, sendMessage } from "~/shared/ws";
 

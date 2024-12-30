@@ -1,7 +1,7 @@
 import { sample } from "effector";
 import { equals, not } from "patronum";
+import { moveReceived } from "~/game/commands";
 import { $$state, $status, pieceDropped, time } from "~/game/model";
-import { moveReceived } from "~/game/parts/commands";
 import { createMessage, sendMessage } from "~/shared/ws";
 import type { PieceDrop } from "~/types/game";
 
