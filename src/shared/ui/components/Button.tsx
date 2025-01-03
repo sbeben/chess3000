@@ -9,7 +9,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-  "w-full rounded p-1 md:p-2 lg:p-4 text-white lg:text-lg disabled:pointer-events-none disabled:cursor-not-allowed";
+  "w-full rounded p-2 text-white cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed";
 
 const variantStyles = {
   default: "bg-blue hover:bg-blue-600 active:bg-blue-600 disabled:bg-blue-800",

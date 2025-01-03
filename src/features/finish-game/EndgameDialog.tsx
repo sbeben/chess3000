@@ -1,14 +1,16 @@
 import { useMemo } from "react";
 
-import * as Game from "~/game/model";
 import { useUnit } from "effector-react";
+import { $$state } from "~/game/model";
 import { clientNavigate } from "~/shared/routing";
+import { Button } from "~/shared/ui/components/Button";
+import { H } from "~/shared/ui/components/H";
 
 export const EndgameDialog = () => {
   const { isOver, result, playerColor, navigate } = useUnit({
-    isOver: Game.$$state.$isOver,
-    result: Game.$$state.$result,
-    playerColor: Game.$$state.$playerColor,
+    isOver: $$state.$isOver,
+    result: $$state.$result,
+    playerColor: $$state.$playerColor,
     navigate: clientNavigate,
   });
 
@@ -27,34 +29,21 @@ export const EndgameDialog = () => {
   return (
     <dialog
       open
-      style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%,-50%)",
-        padding: "16px",
-        backgroundColor: "white",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-        borderRadius: "8px",
-        border: "none",
-      }}
+      className="
+        absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+        p-4 
+        bg-white 
+        shadow-lg 
+        rounded-lg 
+        border-none
+      "
     >
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-        <h3>{resultText}</h3>
+      <div className="flex flex-col items-center gap-2">
+        <H variant="h3">{resultText}</H>
 
-        <button
-          onClick={() => navigate("/")}
-          style={{
-            padding: "8px",
-            borderRadius: "0 4px 4px 0",
-            border: "1px solid #ccc",
-            borderLeft: "none",
-            background: "white",
-            cursor: "pointer",
-          }}
-        >
+        <Button onClick={() => navigate("/")} variant="secondary">
           Exit
-        </button>
+        </Button>
       </div>
     </dialog>
   );

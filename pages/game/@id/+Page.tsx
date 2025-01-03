@@ -8,6 +8,7 @@ import { $currentHistoryMove, $isViewingHistory } from "~/features/view-game-his
 import { Board, DnDProvider } from "~/game/parts";
 import { FEN } from "~/game/parts/helpers";
 import { colors } from "~/shared/ui/colors";
+import { getDraggingElement } from "~/shared/utils/chess";
 import { isTouchDevice } from "~/shared/utils/touch";
 import type { Piece } from "~/types/game";
 import { GamePanel } from "~/widgets/game-panel/GamePanel";
@@ -77,13 +78,20 @@ export function Page() {
   useGate(gate);
 
   const getSquareStyles = (): CustomSquareStyles => {
+    const isDark = false;
     const styles: CustomSquareStyles = {};
 
     // Set base colors
     for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
       for (let rank = 1; rank <= 8; rank++) {
         const square = `${String.fromCharCode(file)}${rank}`;
-        const baseColor = isLightSquare(square) ? colors.white.DEFAULT : colors.blue.DEFAULT;
+        const baseColor = isLightSquare(square)
+          ? isDark
+            ? colors.gray.DEFAULT
+            : colors.white.DEFAULT
+          : isDark
+            ? colors.blue.DEFAULT
+            : colors.blue.DEFAULT;
         styles[square] = {
           background: baseColor,
         };
@@ -147,25 +155,26 @@ export function Page() {
 
   const handleDragStart = (piece: Piece) => {
     if (isTouchDevice()) {
-      const pieceElement = document.querySelector(`[data-piece='${piece}']`) as HTMLElement;
-      if (pieceElement) {
-        pieceElement.style.transform = "translateY(-20px)";
-        pieceElement.style.scale = "2";
-      }
+      // const pieceElement = getDraggingElement();
+      // const pieceElement = getDraggingElement();
+      // if (pieceElement) {
+      //   pieceElement.style.transform = "translateY(-20px)";
+      //   pieceElement.style.scale = "2";
+      // }
     }
   };
 
   const handleDragEnd = (piece: Piece) => {
     if (isTouchDevice()) {
-      const pieceElement = document.querySelector(`[data-piece='${piece}']`) as HTMLElement;
-      if (pieceElement) {
-        pieceElement.style.transform = "none";
-        pieceElement.style.scale = "none";
-      }
+      //   const pieceElement = getDraggingElement();
+      //   if (pieceElement) {
+      //     pieceElement.style.transform = "none";
+      //     pieceElement.style.scale = "none";
+      //   }
     }
   };
   return (
-    <div className="h-full w-full sm:2 md:pt-6 lg:pt-10 ">
+    <div className="h-full w-full sm:2 lg:pt-10 ">
       <DnDProvider>
         <GamePanel>
           <div className="flex items-center justify-center md:justify-center flex-col md:flex-row gap-4 w-full">
@@ -212,8 +221,11 @@ export function Page() {
                   return canDrop;
                 }}
                 onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
-                customSquareStyles={getSquareStyles()}
                 customNotationStyle={{ color: colors.red.DEFAULT }}
+                customSquareStyles={getSquareStyles()}
+                // customLightSquareStyle={{ background: colors.white.DEFAULT }}
+                //  customDarkSquareStyle={{ background: colors.blue.DEFAULT }}
+                //snapToCursor
                 // getPositionObject={(position) => positionChanged(position)}
               />
               {status === "pick" && <div className="absolute top-0 left-0 w-full h-1/2 bg-gray opacity-70" />}

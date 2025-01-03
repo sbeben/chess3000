@@ -13,7 +13,7 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
   const goTo = useUnit(clientNavigate);
   return (
     <Provider value={fork({ values: scopeValues })}>
-      <div className="fixed w-screen h-screen overflow-hidden bg-white">
+      <div className="fixed w-screen h-screen overflow-hidden bg-white dark:bg-gray">
         <div className="relative h-full w-full flex justify-center items-center flex-col">
           <div className="h-[44px] sm:h-[56px] flex justify-center items-center">
             <div
@@ -22,7 +22,10 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
                 background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
               }}
             >
-              <h1 className="text-xxl font-bold mt-[36px] sm:mt-[48px] cursor-pointer" onClick={() => goTo("/")}>
+              <h1
+                className="text-xxl font-bold mt-[36px] sm:mt-[48px] cursor-pointer text-black dark:text-white"
+                onClick={() => goTo("/")}
+              >
                 chess3000
               </h1>
             </div>

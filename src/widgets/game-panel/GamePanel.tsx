@@ -4,14 +4,13 @@ import { PickPieces } from "~/features/pick-pieces/PickPieces";
 import { ValueInfo } from "~/features/pick-pieces/ValueInfo";
 import { $isKingOnBoard, $value } from "~/features/pick-pieces/model";
 import { SwitchOrientationButton } from "~/features/switch-board-orientation/SwitchOrientationButton";
-import { $boardOrientation, $isBoardOrientationOriginal } from "~/features/switch-board-orientation/model";
+import { $isBoardOrientationOriginal } from "~/features/switch-board-orientation/model";
 import { GameHistory } from "~/features/view-game-history/GameHistory";
 import { HistoryButtons } from "~/features/view-game-history/HistoryButtons";
 import { $$state, $boardSize, $color, $status, time } from "~/game/model";
 import { Timer } from "~/game/parts";
 import { colors } from "~/shared/ui/colors";
-import { Heading } from "~/shared/ui/components/Heading";
-import { formatTimer } from "~/shared/utils/format";
+import { H } from "~/shared/ui/components/H";
 import { useBreakpoint } from "~/shared/utils/useBreakpoints";
 
 import { DrawButton } from "./DrawButton";
@@ -40,9 +39,7 @@ const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: 
         </>
       ) : (
         <>
-          <Heading variant="h4">
-            {isOpponent ? `Opponent ${color === "white" ? "(black)" : "(white)"}` : `You (${color})`}
-          </Heading>
+          <H variant="h4">{isOpponent ? `Opponent ${color === "white" ? "(black)" : "(white)"}` : `You (${color})`}</H>
           <div className="flex gap-1 h-full justify-end items-center">
             {!!color && turn === (isOpponent ? (color === "white" ? "b" : "w") : color[0]) && (
               <div

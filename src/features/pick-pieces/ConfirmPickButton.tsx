@@ -1,5 +1,6 @@
 import classnames from "classnames";
 import { useUnit } from "effector-react";
+import { Button } from "~/shared/ui/components/Button";
 
 import { $isConfirmDisabled, $isPickConfirmed, picked } from "./model";
 
@@ -15,8 +16,8 @@ export const ConfirmPickButton = ({ className }: { className?: classnames.Value 
   );
 
   return (
-    <button onClick={() => confirm()} disabled={isConfirmDisabled} className={style}>
+    <Button onClick={() => confirm()} disabled={isConfirmDisabled} className={style}>
       {isConfirmed ? "waiting" : "confirm"}
-    </button>
+    </Button>
   );
 };

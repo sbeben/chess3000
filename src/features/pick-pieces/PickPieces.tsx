@@ -1,5 +1,6 @@
 import { SparePiece } from "~/game/parts";
 import { values } from "~/game/parts/helpers";
+import { P } from "~/shared/ui/components/P";
 import type { Piece } from "~/types/game";
 
 type Props = {
@@ -28,8 +29,8 @@ export const PickPieces = ({ color, value, isKingActive, boardWidth }: Props) =>
           key={"key" + piece + color}
         />
       </div>
-      <p className="hidden md:block"> - </p>
-      <p>{values[piece as keyof typeof values]}</p>
+      <P className="hidden md:block"> - </P>
+      <P>{values[piece as keyof typeof values]}</P>
     </div>
   ));
 };

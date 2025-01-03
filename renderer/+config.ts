@@ -26,4 +26,6 @@ export default {
 
   // https://vike.dev/hydrationCanBeAborted
   hydrationCanBeAborted: true,
+
+  // htmlAttributes: { class: "dark" },
 } satisfies Config;

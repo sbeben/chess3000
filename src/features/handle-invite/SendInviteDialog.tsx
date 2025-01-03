@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import * as Game from "~/game/model";
 import { useUnit } from "effector-react";
+import { H } from "~/shared/ui/components/H";
 
 export const SendInviteDialog = () => {
   const { inviteLink } = useUnit({
@@ -51,9 +52,14 @@ export const SendInviteDialog = () => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <dialog open className="relative p-4 mt-[20%] bg-white shadow-lg rounded-lg border-none max-w-md w-full mx-4">
-        <h3 className="mb-3 text-lg font-medium">Send link to invite a competitor</h3>
-        <div className="flex">
+      <dialog
+        open
+        className="relative p-4 mt-[20%] bg-white dark:bg-gray shadow-lg rounded-lg border-none max-w-md w-full mx-4"
+      >
+        <H variant="h3" className="text-lg font-medium">
+          Send link to invite a competitor
+        </H>
+        <div className="flex mt-2">
           <input
             type="text"
             value={inviteLink}
@@ -62,12 +68,13 @@ export const SendInviteDialog = () => {
           />
           <button
             onClick={handleCopy}
-            className={`h-10 px-3 rounded-r-md border border-l-0 border-gray 
-            ${copied ? "bg-green_yellow text-gray hover:bg-green_yellow-600 active:bg-green_yellow-700" : "bg-white text-gray hover:bg-gray-50 active:bg-gray-600"} 
-            transition-colors duration-200`}
+            className={`h-10 px-3 rounded-r-md border border-l-0 border-gray ${
+              copied
+                ? "bg-green_yellow text-gray hover:bg-green_yellow-600 active:bg-green_yellow-700"
+                : "bg-white text-gray hover:bg-gray-50 active:bg-gray-600"
+            } transition-colors duration-200`}
           >
             {copied ? (
-              // Checkmark icon
               <svg
                 className="w-5 h-5"
                 viewBox="0 0 24 24"
@@ -81,7 +88,6 @@ export const SendInviteDialog = () => {
                 <path d="M20 6L9 17L4 12" />
               </svg>
             ) : (
-              // Copy icon
               <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                   d="M13 0H6C4.9 0 4 0.9 4 2V10C4 11.1 4.9 12 6 12H13C14.1 12 15 11.1 15 10V2C15 0.9 14.1 0 13 0ZM13 10H6V2H13V10ZM2 4H0V14C0 15.1 0.9 16 2 16H12V14H2V4Z"
