@@ -20,7 +20,7 @@ export function Page() {
 
   return (
     <div className="h-full w-full flex justify-center">
-      <div className="mt-10 flex flex-col gap-4 items-center">
+      <div className="mt-2 tall:mt-10 sm:mt-10 flex flex-col gap-4 items-center">
         <H variant="h3" className="text-center">
           Someone invited you to play
         </H>

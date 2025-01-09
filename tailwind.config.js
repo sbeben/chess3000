@@ -5,6 +5,7 @@ export default {
   theme: {
     extend: {
       screens: {
+        tall: { raw: "(max-width: 479px) and (min-height: 600px)" },
         sm: "480px",
         md: "768px",
         lg: "976px",

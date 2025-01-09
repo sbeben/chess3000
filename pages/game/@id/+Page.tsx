@@ -174,7 +174,7 @@ export function Page() {
     }
   };
   return (
-    <div className="h-full w-full sm:2 lg:pt-10 ">
+    <div className="h-full w-full tall:pt-5 sm:pt-3 md:pt-10">
       <DnDProvider>
         <GamePanel>
           <div className="flex items-center justify-center md:justify-center flex-col md:flex-row gap-4 w-full">

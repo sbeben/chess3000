@@ -67,7 +67,7 @@ const ControlPanel = () => {
     boardSize: $boardSize,
   });
   return (
-    <div className="w-full lg:h-full p-2 sm-p-4 lg-p-6 max-w-[600px]">
+    <div className="w-full lg:h-full px-2 tall:p-2 sm:p-4 lg:p-6 max-w-[600px]">
       {status === "pick" && (
         <div className=" h-full flex flex-row lg:flex-col justify-center items-center gap-2">
           <PickPieces
