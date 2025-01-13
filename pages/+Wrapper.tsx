@@ -6,6 +6,7 @@ import { usePageContext } from "vike-react/usePageContext";
 import { clientNavigate } from "~/shared/routing";
 import { colors } from "~/shared/ui/colors";
 import { H } from "~/shared/ui/components/H";
+import { getPublicFolderPath } from "~/shared/utils/url";
 
 import "./index.css";
 
@@ -40,10 +41,14 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
             </H>
             <div className="flex items-center gap-2">
               <a href="https://github.com/sbeben">
-                <img src="/github-mark.png" alt="github" className="h-[20px] cursor-pointer" />
+                <img src={getPublicFolderPath("github-mark.png")} alt="github" className="h-[20px] cursor-pointer" />
               </a>
               <a href="https://www.linkedin.com/in/senia-merlin/">
-                <img src="/In-White-128.png" alt="linkedin" className="h-[20px] cursor-pointer invert" />
+                <img
+                  src={getPublicFolderPath("In-White-128.png")}
+                  alt="linkedin"
+                  className="h-[20px] cursor-pointer invert"
+                />
               </a>
             </div>
           </div>

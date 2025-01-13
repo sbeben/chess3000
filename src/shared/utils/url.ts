@@ -1,6 +1,5 @@
 export function getUrl(defaultPort: number = 3000) {
   if (import.meta.env.PROD) {
-    console.log(`i'm in PROD`);
     return import.meta.env.PUBLIC_ENV__HOST;
   }
 
@@ -20,4 +19,12 @@ export const getWebSocketUrl = (httpUrl: string) => {
   const isSecure = url.protocol === "https:";
   url.protocol = url.protocol.replace(isSecure ? "https" : "http", isSecure ? "wss" : "ws");
   return url.toString();
+};
+
+export const getPublicFolderPath = (filename: string, defaultPort: number = 3000) => {
+  if (import.meta.env.PROD) {
+    return `${getUrl()}/client/${filename}`;
+  } else {
+    return `http://0.0.0.0:${defaultPort}/${filename}`;
+  }
 };
