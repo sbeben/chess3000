@@ -5,8 +5,15 @@
     "target": "ES2020",
     // Doesn't apply to server/, see ts-node config down below and server/tsconfig.json
     "moduleResolution": "Bundler",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["vite/client", "node"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "types": [
+      "vite/client",
+      "node"
+    ],
     "jsx": "react-jsx",
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -15,10 +22,11 @@
     "noEmit": true,
     "noUncheckedIndexedAccess": true,
     // "moduleDetection": "force",
-    "verbatimModuleSyntax": true,
-
+    // "verbatimModuleSyntax": true,
     "paths": {
-      "~/*": ["src/*"]
+      "~/*": [
+        "src/*"
+      ]
     }
   },
   "ts-node": {
@@ -29,6 +37,12 @@
       "moduleResolution": "Bundler"
     }
   },
-  "include": ["src", "pages", "renderer"],
-  "exclude": ["dist"]
+  "include": [
+    "src",
+    "pages",
+    "renderer"
+  ],
+  "exclude": [
+    "dist"
+  ]
 }

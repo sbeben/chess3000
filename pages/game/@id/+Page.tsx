@@ -10,7 +10,7 @@ import { FEN } from "~/game/parts/helpers";
 import { colors } from "~/shared/ui/colors";
 import { getDraggingElement } from "~/shared/utils/chess";
 import { isTouchDevice } from "~/shared/utils/touch";
-import type { Piece } from "~/types/game";
+import type { Piece, Square } from "~/types/game";
 import { GamePanel } from "~/widgets/game-panel/GamePanel";
 
 import { gate } from "./model";
@@ -82,21 +82,21 @@ export function Page() {
     const styles: CustomSquareStyles = {};
 
     // Set base colors
-    for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
-      for (let rank = 1; rank <= 8; rank++) {
-        const square = `${String.fromCharCode(file)}${rank}`;
-        const baseColor = isLightSquare(square)
-          ? isDark
-            ? colors.gray.DEFAULT
-            : colors.white.DEFAULT
-          : isDark
-            ? colors.blue.DEFAULT
-            : colors.blue.DEFAULT;
-        styles[square] = {
-          background: baseColor,
-        };
-      }
-    }
+    // for (let file = "a".charCodeAt(0); file <= "h".charCodeAt(0); file++) {
+    //   for (let rank = 1; rank <= 8; rank++) {
+    //     const square = `${String.fromCharCode(file)}${rank}`;
+    //     const baseColor = isLightSquare(square)
+    //       ? isDark
+    //         ? colors.gray.DEFAULT
+    //         : colors.white.DEFAULT
+    //       : isDark
+    //         ? colors.blue.DEFAULT
+    //         : colors.blue.DEFAULT;
+    //     styles[square] = {
+    //       background: baseColor,
+    //     };
+    //   }
+    // }
 
     //highlighting for the last move
     const history = game.history({ verbose: true });
@@ -108,12 +108,12 @@ export function Page() {
 
       styles[fromSquare] = {
         ...styles[fromSquare],
-        background: `linear-gradient(${styles[fromSquare]!.background}, ${colors.green_yellow.DEFAULT})`,
+        background: `linear-gradient(transparent, ${colors.green_yellow.DEFAULT})`,
       };
 
       styles[toSquare] = {
         ...styles[toSquare],
-        background: `linear-gradient(${styles[toSquare]!.background}, ${colors.green_yellow.DEFAULT})`,
+        background: `linear-gradient(transparent, ${colors.green_yellow.DEFAULT})`,
       };
     }
 
@@ -153,25 +153,12 @@ export function Page() {
     return styles;
   };
 
-  const handleDragStart = (piece: Piece) => {
-    if (isTouchDevice()) {
-      // const pieceElement = getDraggingElement();
-      // const pieceElement = getDraggingElement();
-      // if (pieceElement) {
-      //   pieceElement.style.transform = "translateY(-20px)";
-      //   pieceElement.style.scale = "2";
-      // }
-    }
+  const handleDragStart = (piece: Piece, square: Square) => {
+    squareClicked({ square, piece });
   };
 
-  const handleDragEnd = (piece: Piece) => {
-    if (isTouchDevice()) {
-      //   const pieceElement = getDraggingElement();
-      //   if (pieceElement) {
-      //     pieceElement.style.transform = "none";
-      //     pieceElement.style.scale = "none";
-      //   }
-    }
+  const handleDragEnd = (piece: Piece, square: Square) => {
+    squareClicked({ square, piece });
   };
   return (
     <div className="h-full w-full tall:pt-5 sm:pt-3 md:pt-10">
@@ -193,8 +180,8 @@ export function Page() {
                   return true;
                 }}
                 isDraggablePiece={({ piece }) => piece[0]?.toLowerCase() === color?.[0]}
-                onPieceDragBegin={(piece) => handleDragStart(piece)}
-                onPieceDragEnd={(piece) => handleDragEnd(piece)}
+                onPieceDragBegin={(piece, square) => handleDragStart(piece, square)}
+                onPieceDragEnd={(piece, square) => handleDragEnd(piece, square)}
                 // onDragOverSquare={(square) => }
                 onSquareClick={(square, piece) => squareClicked({ square, piece: piece || null })}
                 onPromotionPieceSelect={(pr, from, to) => {
@@ -223,10 +210,14 @@ export function Page() {
                 onPieceDropOffBoard={(square, piece) => pieceDroppedOff({ piece, square })}
                 customNotationStyle={{ color: colors.red.DEFAULT }}
                 customSquareStyles={getSquareStyles()}
-                // customLightSquareStyle={{ background: colors.white.DEFAULT }}
-                //  customDarkSquareStyle={{ background: colors.blue.DEFAULT }}
+                customDraggingPieceStyle={{
+                  transform: `scale(2) ${isTouchDevice() ? "translate(0,-15px)" : ""}`,
+                }}
+                customLightSquareStyle={{ background: colors.white.DEFAULT }}
+                customDarkSquareStyle={{ background: colors.blue.DEFAULT }}
                 //snapToCursor
                 // getPositionObject={(position) => positionChanged(position)}
+                customDropSquareStyle={{ boxShadow: `inset 0 0 1px 6px ${colors.green_yellow.DEFAULT}` }}
               />
               {status === "pick" && <div className="absolute top-0 left-0 w-full h-1/2 bg-gray opacity-70" />}
             </div>
