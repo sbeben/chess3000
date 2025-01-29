@@ -209,3 +209,5 @@ const resizeListener: ResizeListener = createFactory(() => {
 });
 
 export const $$resizeListener = invoke(resizeListener);
+
+export const logFx = createEffect(console.log);

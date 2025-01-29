@@ -47,6 +47,15 @@ export const gameStarted = sample({
   },
 });
 
+export const timeSync = sample({
+  clock: messageReceived,
+  filter: ({ type }) => type === "sync",
+  fn: ({ data }) => {
+    const { timestamp, white, black } = data as WsServerDataDict["sync"];
+    return { diff: Date.now() - timestamp, white, black };
+  },
+});
+
 //output
 
 // export const sendCommand = <T extends WsClientEventType>({ type, data }: { type: T; data?: WsClientDataDict[T] }) => {

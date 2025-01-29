@@ -58,12 +58,14 @@ export function createGameRoom({
     },
     isDrawOffered: null,
     creatorColor: playerColor,
+    syncTimeout: null,
   };
 }
 
 export function cleanupGame(gameKey: string) {
   const gameRoom = WSMap[gameKey];
   if (gameRoom) {
+    clearTimeout(gameRoom.syncTimeout ?? undefined);
     Object.values(gameRoom.players).forEach((player) => {
       if (player.conn) {
         player.conn.close();
@@ -159,6 +161,19 @@ export function createGameCommands({ socket, gameKey, playerId }: CreateGameComm
 
           send(socket, "start", { fen });
           send(otherPlayer!.conn!, "start", { fen });
+
+          gameRoom.syncTimeout = setInterval(() => {
+            send(socket, "sync", {
+              [player.color as "white"]: player.timer.getCurrentTime(),
+              [otherPlayer.color as "black"]: otherPlayer.timer.getCurrentTime(),
+              timestamp: Date.now(),
+            });
+            send(otherPlayer.conn!, "sync", {
+              [player.color as "white"]: player.timer.getCurrentTime(),
+              [otherPlayer.color as "black"]: otherPlayer.timer.getCurrentTime(),
+              timestamp: Date.now(),
+            });
+          }, 2500);
 
           gameRoom.status = "game";
         }

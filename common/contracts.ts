@@ -53,6 +53,7 @@ export const WS_SERVER_COMMANDS_SCHEMA_DICT = z.object({
     })
     .strict(),
   error: z.object({ message: z.string() }).strict(),
+  sync: z.object({ white: z.number(), black: z.number(), timestamp: z.number() }),
 });
 
 export const WS_CLIENT_COMMANDS_SCHEMA_DICT = z.object({

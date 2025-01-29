@@ -1,7 +1,8 @@
 import { sample } from "effector";
-import { equals, not } from "patronum";
-import { moveReceived } from "~/game/commands";
+import { equals, not, spread } from "patronum";
+import { moveReceived, timeSync } from "~/game/commands";
 import { $$state, $status, pieceDropped, time } from "~/game/model";
+import { logFx } from "~/shared/utils/effector";
 import { createMessage, sendMessage } from "~/shared/ws";
 import type { PieceDrop } from "~/types/game";
 
@@ -51,4 +52,19 @@ sample({
   filter: equals($$state.$playerColor, "b"),
   fn: ({ timestamp }) => ({ offset: Date.now() - timestamp }),
   target: [time.black.start, time.white.stop],
+});
+
+sample({
+  clock: timeSync,
+  source: { currWhite: time.white.$timer, currBlack: time.black.$timer },
+  fn: ({ currWhite, currBlack }, { diff, white, black }) => ({
+    white: Math.min(currWhite, white + diff),
+    black: Math.min(currBlack, black + diff),
+    log: { currWhite, servWhite: white + diff, currBlack, servBlack: black + diff },
+  }),
+  target: spread({
+    white: time.white.$timer,
+    black: time.black.$timer,
+    log: logFx,
+  }),
 });

@@ -22,6 +22,7 @@ export type GameRoom = {
   };
   isDrawOffered: "black" | "white" | null;
   creatorColor: "black" | "white" | "random";
+  syncTimeout: NodeJS.Timeout | null;
 };
 
 export type WSMapType = Record<string, GameRoom>;
