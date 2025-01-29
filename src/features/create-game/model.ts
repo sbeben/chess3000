@@ -26,7 +26,7 @@ export const gameForm = createForm({
           name: "valid color",
           validator: (value) => ({
             isValid: value === "white" || value === "black" || value === "random",
-            errorText: "Color must be either 'white' or 'black' or 'random'",
+            errorText: "color must be either 'white' or 'black' or 'random'",
           }),
         },
       ],
@@ -38,7 +38,7 @@ export const gameForm = createForm({
           name: "valid time",
           validator: (value) => ({
             isValid: value > 0 && value <= 10800,
-            errorText: "Time must be greater than 0 and up to 3 hours",
+            errorText: "time must be set up to 3 hours",
           }),
         },
       ],

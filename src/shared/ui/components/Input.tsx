@@ -35,7 +35,7 @@ export const Input = ({ label, error, className, containerClassName, errorText, 
         {...props}
       />
       {errorText && (
-        <P secondary className="text-red">
+        <P secondary className="text-red whitespace-pre-wrap">
           {errorText}
         </P>
       )}
@@ -111,7 +111,7 @@ export const Range = ({
       />
       {showValue && <P secondary>{formatValue(Number(value))}</P>}
       {errorText && (
-        <P secondary className="text-red">
+        <P secondary className="text-red whitespace-pre-wrap">
           {errorText}
         </P>
       )}
