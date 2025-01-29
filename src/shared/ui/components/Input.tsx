@@ -4,7 +4,6 @@ import { colors } from "../colors";
 import { Label } from "./Label";
 import { P } from "./P";
 
-// shared/ui/components/Input/types.ts
 export interface BaseInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: boolean;
@@ -19,7 +18,6 @@ export interface RangeProps extends Omit<BaseInputProps, "type"> {
   formatValue?: (value: number) => string;
 }
 
-// shared/ui/components/Input/Input.tsx
 export const Input = ({ label, error, className, containerClassName, errorText, ...props }: BaseInputProps) => {
   return (
     <div className={classNames("flex flex-col gap-1", containerClassName)}>
@@ -48,7 +46,7 @@ export const Input = ({ label, error, className, containerClassName, errorText, 
 // shared/ui/components/Input/NumberInput.tsx
 export const NumberInput = ({ label, error, className, containerClassName, errorText, ...props }: BaseInputProps) => {
   return (
-    <div className={classNames("flex flex-col gap-1", containerClassName)}>
+    <div className={classNames("flex flex-col gap-1 break-words", containerClassName)}>
       {label && <Label>{label}</Label>}
       <input
         type="number"
@@ -66,7 +64,7 @@ export const NumberInput = ({ label, error, className, containerClassName, error
         {...props}
       />
       {errorText && (
-        <P secondary className="text-red">
+        <P secondary className="text-red whitespace-pre-wrap">
           {errorText}
         </P>
       )}
@@ -74,7 +72,6 @@ export const NumberInput = ({ label, error, className, containerClassName, error
   );
 };
 
-// shared/ui/components/Input/Range.tsx
 export const Range = ({
   label,
   error,
@@ -89,7 +86,7 @@ export const Range = ({
 }: RangeProps) => {
   const isDark = false;
   return (
-    <div className={classNames("flex flex-col gap-1", containerClassName)}>
+    <div className={classNames("flex flex-col gap-1 break-normal", containerClassName)}>
       {label && <Label>{label}</Label>}
       <input
         type="range"
@@ -112,11 +109,7 @@ export const Range = ({
         }}
         {...props}
       />
-      {showValue && (
-        <P secondary className="text-right w-full">
-          {formatValue(Number(value))}
-        </P>
-      )}
+      {showValue && <P secondary>{formatValue(Number(value))}</P>}
       {errorText && (
         <P secondary className="text-red">
           {errorText}

@@ -38,7 +38,7 @@ export default function WrapperEffector({ children }: { children: React.ReactNod
           <div className="h-[44px] sm:h-[56px] w-full flex items-center justify-between px-5 gap-2">
             {/* <P className="text-gray">© S. Merlin</P> */}
             <H variant="h4" className="text-gray">
-              © S. Merlin 2024
+              © S. Merlin 2025
             </H>
             <div className="flex items-center gap-2">
               <a href="https://github.com/sbeben">

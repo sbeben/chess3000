@@ -13,8 +13,8 @@ export const gameForm = createForm({
         {
           name: "valid value",
           validator: (value) => ({
-            isValid: typeof value === "number" && value > 0,
-            errorText: "Value must be a positive number",
+            isValid: typeof value === "number" && value > 0 && value <= 279,
+            errorText: "total pieces value \nmust be a positive number \nfrom 1 to 279",
           }),
         },
       ],
@@ -74,7 +74,7 @@ export const $timeControls = createStore([
 export const $increments = createStore([
   0,
   ...Array.from({ length: 20 }, (_, i) => i + 1),
-  ...Array.from({ length: 4 }, (_, i) => (i + 1) * 5),
+  ...Array.from({ length: 4 }, (_, i) => (i + 5) * 5),
   60,
   90,
   120,

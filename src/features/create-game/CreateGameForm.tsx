@@ -29,10 +29,11 @@ const CreateGameForm = () => {
       <NumberInput
         label="value"
         value={value.value ?? ""}
-        onChange={(e) => value.onChange(Number(e.target.value))}
+        //@ts-expect-error
+        onChange={(e) => value.onChange(e.target.value || null)}
         error={!!value.firstError}
         errorText={value.firstError?.errorText}
-        placeholder="Enter value"
+        placeholder="total pieces value"
       />
 
       <div className="flex flex-col gap-1">
