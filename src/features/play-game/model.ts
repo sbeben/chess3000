@@ -54,17 +54,18 @@ sample({
   target: [time.black.start, time.white.stop],
 });
 
-sample({
-  clock: timeSync,
-  source: { currWhite: time.white.$timer, currBlack: time.black.$timer },
-  fn: ({ currWhite, currBlack }, { diff, white, black }) => ({
-    white: Math.min(currWhite, white + diff),
-    black: Math.min(currBlack, black + diff),
-    log: { currWhite, servWhite: white + diff, currBlack, servBlack: black + diff },
-  }),
-  target: spread({
-    white: time.white.$timer,
-    black: time.black.$timer,
-    log: logFx,
-  }),
-});
+//needs improvement
+// sample({
+//   clock: timeSync,
+//   source: { currWhite: time.white.$timer, currBlack: time.black.$timer },
+//   fn: ({ currWhite, currBlack }, { diff, white, black }) => ({
+//     white: Math.min(currWhite, white + diff),
+//     black: Math.min(currBlack, black + diff),
+//     log: { currWhite, servWhite: white + diff, currBlack, servBlack: black + diff },
+//   }),
+//   target: spread({
+//     white: time.white.$timer,
+//     black: time.black.$timer,
+//     log: logFx,
+//   }),
+// });
