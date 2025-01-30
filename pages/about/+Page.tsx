@@ -12,8 +12,8 @@ export default function PageAbout() {
         <P className="w-full text-pretty">
           chess3000 is a chess variant where players select their pieces before the game starts.
           <br />
-          Each player has a set amount of points to spend, and every piece has its own cost (based on traditional chess
-          piece valuations).
+          Each player has a set amount of points to spend (value), and every piece has its own cost (based on
+          traditional chess piece valuations).
           <br />
           Players choose their pieces independently, similar to{" "}
           <a
