@@ -30,7 +30,7 @@ const CreateGameForm = () => {
         label="value"
         value={value.value ?? ""}
         //@ts-expect-error
-        onChange={(e) => value.onChange(e.target.value || null)}
+        onChange={(e) => value.onChange(e.target.value ? Number(e.target.value) : null)}
         error={!!value.firstError}
         errorText={value.firstError?.errorText}
         placeholder="total pieces value"
