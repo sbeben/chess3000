@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const GAME_OVER_REASONS = [
+export const GAME_OVER_REASONS = [
   "timeout",
   "resignation",
   "stalemate",

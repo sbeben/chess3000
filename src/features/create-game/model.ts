@@ -61,11 +61,7 @@ export const gameForm = createForm({
 
 export const $colors = createStore(["white", "black", "random"]);
 export const $timeControls = createStore([
-  0,
-  15,
-  30,
-  45,
-  60,
+  ...Array.from({ length: 5 }, (_, i) => i * 15),
   ...Array.from({ length: 19 }, (_, i) => (i + 2) * 60),
   ...Array.from({ length: 4 }, (_, i) => (i + 5) * 300),
   ...Array.from({ length: 9 }, (_, i) => (i + 4) * 900),

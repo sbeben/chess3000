@@ -7,23 +7,30 @@ import { SwitchOrientationButton } from "~/features/switch-board-orientation/Swi
 import { $isBoardOrientationOriginal } from "~/features/switch-board-orientation/model";
 import { GameHistory } from "~/features/view-game-history/GameHistory";
 import { HistoryButtons } from "~/features/view-game-history/HistoryButtons";
-import { $$state, $boardSize, $color, $status, time } from "~/game/model";
+import { $$state, $boardSize, $color, $opponentColor, $status, time } from "~/game/model";
 import { Timer } from "~/game/parts";
+import { Link } from "~/shared/routing";
 import { colors } from "~/shared/ui/colors";
 import { H } from "~/shared/ui/components/H";
+import { P } from "~/shared/ui/components/P";
 import { useBreakpoint } from "~/shared/utils/useBreakpoints";
 
 import { DrawButton } from "./DrawButton";
 import { ResignButton } from "./ResignButton";
 
 const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: boolean }) => {
-  const { color, turn, whiteTime, blackTime, status } = useUnit({
+  const { color, opponentColor, turn, status } = useUnit({
     color: $color,
+    opponentColor: $opponentColor,
     turn: $$state.$turn,
-    whiteTime: time.white.$timer,
-    blackTime: time.black.$timer,
     status: $status,
   });
+
+  const timers = useUnit({
+    white: time.white.$timer,
+    black: time.black.$timer,
+  });
+
   return (
     <div
       className={`
@@ -38,33 +45,37 @@ const TimerPanel = ({ isOpponent, isMobile }: { isOpponent: boolean; isMobile?: 
           {isMobile && <ConfirmPickButton className="max-w-[100px]" />}
         </>
       ) : (
-        <>
-          <H variant="h4">{isOpponent ? `Opponent ${color === "white" ? "(black)" : "(white)"}` : `You (${color})`}</H>
-          <div className="flex gap-1 h-full justify-end items-center">
-            {!!color && turn === (isOpponent ? (color === "white" ? "b" : "w") : color[0]) && (
-              <div
-                className="w-5 h-5 flex justify-center items-center"
-                style={{
-                  background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
-                }}
-              >
-                ♟️
-              </div>
-            )}
-            <Timer time={isOpponent !== (color === "white") ? blackTime : whiteTime} />
-          </div>
-        </>
+        !!color &&
+        !!opponentColor && (
+          <>
+            <H variant="h4">{isOpponent ? `Opponent ${opponentColor}` : `You (${color})`}</H>
+            <div className="flex gap-1 h-full justify-end items-center">
+              {turn === (isOpponent ? opponentColor[0] : color[0]) && (
+                <div
+                  className="w-5 h-5 flex justify-center items-center"
+                  style={{
+                    background: `radial-gradient(circle, ${colors.green_yellow.DEFAULT} 0%, transparent 70%)`,
+                  }}
+                >
+                  ♟️
+                </div>
+              )}
+              <Timer time={timers[isOpponent ? opponentColor : color]} />
+            </div>
+          </>
+        )
       )}
     </div>
   );
 };
 const ControlPanel = () => {
-  const { status, color, value, isKingOnBoard, boardSize } = useUnit({
+  const { status, color, value, isKingOnBoard, boardSize, result } = useUnit({
     status: $status,
     color: $color,
     value: $value,
     isKingOnBoard: $isKingOnBoard,
     boardSize: $boardSize,
+    result: $$state.$result,
   });
   return (
     <div className="w-full lg:h-full px-2 tall:p-2 sm:p-4 lg:p-6 max-w-[600px]">
@@ -78,17 +89,29 @@ const ControlPanel = () => {
           />
         </div>
       )}
-      {status === "game" && (
+      {["analysis", "game", "finished"].includes(status) && (
         <div className={`h-full w-full flex flex-col lg:flex-col-reverse gap-2`}>
           <div className="flex justify-center items-center gap-0.5 sm:gap-1 md:gap-2">
             <HistoryButtons.ToFirst />
             <HistoryButtons.OneBack />
-            <SwitchOrientationButton />
-            <DrawButton />
-            <ResignButton />
+            {status === "game" && (
+              <>
+                <SwitchOrientationButton />
+                <DrawButton />
+                <ResignButton />
+              </>
+            )}
             <HistoryButtons.OneForward />
             <HistoryButtons.ToLast />
           </div>
+          {status === "analysis" && result && (
+            <P secondary className="text-gray w-full text-center">
+              {`Game over. ${result === "draw" ? "Draw." : result.charAt(0).toUpperCase() + result.slice(1) + " won."} `}
+              <Link href="/">
+                <u>Play again</u>
+              </Link>
+            </P>
+          )}
           <div className="flex-1 overflow-auto">
             <GameHistory />
           </div>

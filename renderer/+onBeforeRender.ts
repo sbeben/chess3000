@@ -8,7 +8,7 @@ import { $redirectTo } from "~/shared/routing";
 export const onBeforeRender: OnBeforeRenderAsync = async (pageContext) => {
   // https://vike.dev/pageContext
   const { pageStarted } = pageContext.config;
-  console.log({ onbefore: pageContext.data });
+
   // https://effector.dev/en/api/effector/fork/
   const scope = fork();
 

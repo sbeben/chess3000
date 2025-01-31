@@ -2,6 +2,7 @@ import { combine, createEvent, createStore, sample } from "effector";
 import { equals, not, or } from "patronum";
 import { $positionObject, $status, pieceDropped, positionChanged } from "~/game/model";
 import { calculatePositionValue } from "~/game/parts/helpers";
+import { createMessage, sendMessage } from "~/shared/ws";
 import type { Piece, PieceDrop, Square } from "~/types/game";
 
 export const sparePieceDropped = createEvent<{ piece: Piece; square: Square }>();
@@ -68,4 +69,11 @@ sample({
     };
   },
   target: positionChanged,
+});
+
+sample({
+  clock: picked,
+  source: $positionObject,
+  fn: (position) => createMessage("confirm_pick", { position: position! }),
+  target: sendMessage,
 });

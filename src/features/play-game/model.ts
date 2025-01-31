@@ -1,14 +1,13 @@
 import { sample } from "effector";
-import { equals, not, spread } from "patronum";
-import { moveReceived, timeSync } from "~/game/commands";
+import { equals, not } from "patronum";
+import { moveReceived } from "~/game/commands";
 import { $$state, $status, pieceDropped, time } from "~/game/model";
-import { logFx } from "~/shared/utils/effector";
 import { createMessage, sendMessage } from "~/shared/ws";
 import type { PieceDrop } from "~/types/game";
 
 sample({
   clock: pieceDropped,
-  filter: not(equals($status, "pick")),
+  filter: equals($status, "game"),
   target: $$state.move.prepend(
     //
     ({ piece, from, to }: PieceDrop) => ({ from, to, promotion: piece[1]?.toLowerCase() }),

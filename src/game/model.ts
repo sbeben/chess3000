@@ -10,9 +10,12 @@ import { createTimer } from "./parts/timer-factory";
 //meta info
 export const $key = createStore<string | null>(null);
 export const $selfId = createStore<string | null>(null);
-export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished">("created");
+export const $status = createStore<"created" | "pick_await" | "pick" | "game" | "finished" | "analysis">("created");
 export const $inviteLink = createStore<string | null>(null);
+//
+
 export const $color = createStore<"black" | "white" | null>(null);
+export const $opponentColor = $color.map((c) => (c ? (c === "black" ? "white" : "black") : null));
 
 export const positionChanged = createEvent<BoardPosition>();
 export const $positionObject = restore(positionChanged, null);
@@ -29,12 +32,9 @@ export const $boardSize = $$resizeListener.$width.map((w) => {
   return Math.min(w - padding, maxWidth);
 });
 
-const $$whiteTime = invoke(createTimer);
-const $$blackTime = invoke(createTimer);
-
 export const time = {
-  white: $$whiteTime,
-  black: $$blackTime,
+  white: invoke(createTimer),
+  black: invoke(createTimer),
 };
 
 export const $$state = invoke(createChess);
@@ -43,12 +43,12 @@ sample({
   clock: $status.updates,
   filter: (status) => status === "game",
   fn: () => true,
-  target: $$state.$isStarted,
+  target: $$state.$isOngoing,
 });
 
 sample({
   clock: $status.updates,
   filter: (status) => status === "finished",
   fn: () => false,
-  target: $$state.$isStarted,
+  target: $$state.$isOngoing,
 });

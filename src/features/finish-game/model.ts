@@ -3,10 +3,11 @@ import { createEvent, createStore, sample } from "effector";
 import { condition, not, or, spread } from "patronum";
 import { moveReceived } from "~/game/commands";
 import { $$state, $color, $status, time } from "~/game/model";
+import { GAME_OVER_REASONS_MAP } from "~/game/parts/helpers";
 import { $$setableStore, $$toggle } from "~/shared/utils/effector";
 import { createMessage, messageReceived, sendMessage } from "~/shared/ws";
 
-import type { WsServerDataDict } from "../../../common/contracts";
+import { type WsServerDataDict } from "../../../common/contracts";
 
 export const resignClicked = createEvent();
 export const offerDrawClicked = createEvent();
@@ -22,6 +23,11 @@ export const offerDraw = createEvent();
 
 export const acceptDraw = createEvent();
 export const declineDraw = createEvent();
+
+export const $gameOverReason = createStore<string | null>(null);
+
+export const $shouldShowEndgameDialog = $status.map((s) => s === "finished");
+export const closeEndgameDialogClicked = createEvent();
 
 condition({
   source: resignClicked,
@@ -86,13 +92,26 @@ sample({
   clock: messageReceived,
   filter: ({ type }) => type === "game_over",
   fn: ({ data }) => {
-    const { result } = data as WsServerDataDict["game_over"];
-    return { status: "finished" as const, isOver: true, result, timers: { offset: 0 } };
+    const { result, reason } = data as WsServerDataDict["game_over"];
+    return {
+      status: "finished" as const,
+      isOver: true,
+      result,
+      timers: { offset: 0 },
+      reason: GAME_OVER_REASONS_MAP[reason],
+    };
   },
   target: spread({
     status: $status,
     result: $$state.$result,
     isOver: $$state.$isOver,
+    reason: $gameOverReason,
     timers: [time.black.stop, time.white.stop],
   }),
+});
+
+sample({
+  clock: closeEndgameDialogClicked,
+  fn: () => "analysis" as const,
+  target: $status,
 });

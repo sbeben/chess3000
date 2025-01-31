@@ -1,6 +1,8 @@
 import type { Chess } from "chess.js";
 import type { BoardPosition, Piece } from "~/types/game";
 
+import { GAME_OVER_REASONS } from "../../../common/contracts";
+
 export const values = {
   P: 1,
   B: 3,
@@ -13,6 +15,18 @@ export const values = {
 export const FEN = {
   empty: "8/8/8/8/8/8/8/8 w - - 0 1",
   full: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+};
+
+export const GAME_OVER_REASONS_MAP: { [key in (typeof GAME_OVER_REASONS)[number]]: string } = {
+  timeout: "Time is out.",
+  resignation: "Resignation.",
+  stalemate: "Stalemate.",
+  checkmate: "Checkmate.",
+  threefold_repetition: "Threefold repetition.",
+  insufficient_material: "Insufficient material.",
+  draw_agreement: "Opponents agreed on a draw.",
+  user_disconnected: "User disconnected.",
+  invalid_pick: "Pick is incorrect and unplayable.",
 };
 
 export const clone = (chess: Chess): Chess => {

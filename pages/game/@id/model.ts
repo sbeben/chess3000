@@ -1,8 +1,8 @@
 import type { Color, Move } from "chess.js";
-import { createStore, sample } from "effector";
+import { sample } from "effector";
 import { createGate } from "effector-react";
 import { spread } from "patronum";
-import { $value, picked } from "~/features/pick-pieces/model";
+import { $value } from "~/features/pick-pieces/model";
 import "~/features/play-game/model";
 import { $boardOrientation } from "~/features/switch-board-orientation/model";
 import { gameCreated, gameJoined, gameStarted, opponentAccepted } from "~/game/commands";
@@ -14,13 +14,12 @@ import {
   $inviteLink,
   $key,
   $position,
-  $positionObject,
   $selfId,
   $status,
   time,
 } from "~/game/model";
 import { $$resizeListener } from "~/shared/utils/effector";
-import { createMessage, initWebsocketFx, sendMessage } from "~/shared/ws";
+import { initWebsocketFx } from "~/shared/ws";
 
 import { pageStarted } from "./+pageStarted";
 
@@ -90,13 +89,6 @@ sample({
 });
 
 //for both
-sample({
-  clock: picked,
-  source: $positionObject,
-  fn: (position) => createMessage("confirm_pick", { position: position! }),
-  target: sendMessage,
-});
-
 sample({
   clock: gameStarted,
   source: $color,
